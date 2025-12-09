@@ -1,0 +1,41 @@
+# Core
+fastapi
+uvicorn[standard]
+pydantic
+
+# Elasticsearch
+elasticsearch
+elasticsearch-dsl
+
+# MinIO
+minio
+
+# Kafka (optional but recommended)
+kafka-python
+
+# LLM + Embeddings
+langchain
+langchain-community
+sentence-transformers
+faiss-cpu
+
+# Chunking + Converters
+python-docx
+pypdf
+pdfplumber
+docx2txt
+markdown
+langchain-text-splitters
+
+# Utils
+requests
+tqdm
+python-dotenv
+PyYAML
+
+# Reranking / Cross Encoder
+transformers
+torch
+
+# Development
+pytest

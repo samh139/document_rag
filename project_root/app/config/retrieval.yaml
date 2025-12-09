@@ -1,0 +1,6 @@
+retrieval:
+  bm25_weight: 0.45
+  vector_weight: 0.45
+  summary_vector_weight: 0.10
+  use_summary_vector_threshold: 0.65  # broad query detection
+  top_k: 10

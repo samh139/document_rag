@@ -1,0 +1,8 @@
+doc_sprawl_env/
+venv/
+env/
+ENV/
+*.pyc
+__pycache__/
+.DS_Store
+.env

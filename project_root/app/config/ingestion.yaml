@@ -1,0 +1,11 @@
+chunking:
+  chunk_size: 1200
+  overlap: 150
+
+elasticsearch:
+  index_name: "doc_chunks"
+  files_index_name: "files"
+  images_index_name: "images"
+
+minio:
+  bucket_name: "documents"
