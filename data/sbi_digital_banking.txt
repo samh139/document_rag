@@ -1,0 +1,31 @@
+STATE BANK OF INDIA – DIGITAL BANKING
+
+1. YONO SBI App
+- Unified digital platform
+- Balance enquiry, FD creation, loan inquiry, UPI, bill payments
+- Account opening through video KYC
+
+2. SBI Internet Banking
+- Login via username/password and OTP
+- Fund transfer via NEFT, RTGS, IMPS
+- E-statement facility
+
+3. BHIM SBI Pay (UPI)
+- UPI-based payments
+- Virtual Payment Address (VPA) creation
+- QR code payments
+
+4. ATM & CDM Services
+- Cash withdrawal
+- Cash deposit machines (CDM)
+- Balance enquiry
+- PIN change
+
+5. SMS & Missed Call Banking
+- Balance: Missed call to 09223766666
+- Mini statement: Missed call to 09223866666
+
+6. Debit Cards
+- RuPay, Visa, MasterCard
+- Contactless cards
+- International cards for eligible accounts

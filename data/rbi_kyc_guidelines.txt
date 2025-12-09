@@ -1,0 +1,22 @@
+RESERVE BANK OF INDIA – BASIC KYC GUIDELINES
+
+1. KYC Documentation
+- Proof of Identity (POI): Aadhaar, PAN, Passport, Voter ID.
+- Proof of Address (POA): Aadhaar, Utility bill, Bank statement.
+- For minors: identity of guardian required.
+- For NRIs: passport and overseas address proof.
+
+2. Simplified KYC (Small Accounts)
+- Low-risk accounts.
+- Restrictions on balance and total credits.
+- Valid for 12 months, extendable to 24 months.
+
+3. Periodic KYC Updates
+- Based on risk category: low/moderate/high.
+- Banks must notify customers before freezing accounts.
+
+4. Aadhaar-based e-KYC
+- Allowed for banks with UIDAI authentication permission.
+
+5. Video KYC
+- Customer verification through video-based process.

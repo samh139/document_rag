@@ -1,0 +1,34 @@
+fastapi
+uvicorn[standard]
+fastapi[all]
+
+pydantic
+pydantic-settings
+python-dotenv
+typing_extensions
+
+autogen-core
+autogen-ext
+
+elasticsearch
+pymongo
+
+langchain
+langchain-community
+faiss-cpu
+sentence-transformers
+chromadb
+
+accelerate
+
+requests
+tqdm
+
+ollama
+
+# Optional caching
+redis
+
+# Local LLM runtime
+ctransformers
+huggingface_hub
