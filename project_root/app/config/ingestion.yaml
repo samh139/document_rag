@@ -1,11 +1,36 @@
-chunking:
-  chunk_size: 1200
-  overlap: 150
+ingestion:
+  chunking:
+    pdf:
+      max_chars: 2000
+      overlap: 200
+    docx:
+      max_chars: 2000
+      overlap: 200
+    markdown:
+      max_chars: 1500
+      overlap: 150
+    txt:
+      max_chars: 1800
+      overlap: 150
 
-elasticsearch:
-  index_name: "doc_chunks"
-  files_index_name: "files"
-  images_index_name: "images"
+  minio:
+    enabled: false
+    bucket: "documents"
+    base_path: "raw/"
+    endpoint: "${MINIO_ENDPOINT}"
+    access_key: "${MINIO_ACCESS_KEY}"
+    secret_key: "${MINIO_SECRET_KEY}"
 
-minio:
-  bucket_name: "documents"
+  elasticsearch:
+    index_name: "docsprawl_chunks"
+    create_index_if_missing: true
+
+  embeddings:
+    batch_size: 32
+    model: "nomic-embed-text"
+    normalize: true
+
+  kafka:
+    enabled: false
+    topic: "doc_chunks"
+    bootstrap_servers: "${KAFKA_BOOTSTRAP}"

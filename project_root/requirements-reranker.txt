@@ -1,0 +1,9 @@
+flask
+sentence-transformers
+torch
+transformers
+uvicorn
+fastapi
+pydantic
+jinahub-rerankers==0.0.0  # placeholder if using jina hub reranker; otherwise implement locally
+minio

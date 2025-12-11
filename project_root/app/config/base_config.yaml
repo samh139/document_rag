@@ -1,2 +1,30 @@
-environment: dev
-log_level: INFO
+app:
+  name: "document_sprawl_system"
+  environment: "local"            # local | dev | stage | prod
+
+paths:
+  data_dir: "data/"
+  temp_dir: "tmp/"
+  logs_dir: "logs/"
+
+ollama:
+  host: "http://localhost:11434"
+  embed_model: "nomic-embed-text"
+  timeout: 60
+
+elasticsearch:
+  host: "http://localhost:9200"
+  username: "${ES_USERNAME}"
+  password: "${ES_PASSWORD}"
+  index_prefix: "docsprawl"
+
+gcp:
+  enabled: false
+  #project_id: "your-gcp-project"
+  #bucket_name: "your-bucket-name"   # optional if storing documents
+  # service_account_json is loaded from secrets.env
+
+
+log:
+  level: "INFO"
+  config_file: "logging.yaml"

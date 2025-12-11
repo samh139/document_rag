@@ -6,3 +6,4 @@ ENV/
 __pycache__/
 .DS_Store
 .env
+app/config/secrets.env

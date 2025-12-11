@@ -32,3 +32,59 @@ redis
 # Local LLM runtime
 ctransformers
 huggingface_hub
+
+# --- Core ---
+python-dotenv
+pydantic
+tqdm
+requests
+
+# --- LLM / Embeddings ---
+langchain
+langchain-community
+sentence-transformers        # For embeddings
+transformers                 # Needed for CrossEncoder (reranker)
+faiss-cpu                    # Optional local vector experiments
+
+# --- Text Splitters ---
+langchain-text-splitters
+
+# --- Document Loaders ---
+python-docx                  # Read .docx
+pdfminer.six                 # Extract text from PDF
+PyMuPDF                      # More robust PDF processing (fitz)
+docx2txt                     # Optional docx extraction
+unstructured                 # optional general-purpose loader
+
+# --- Elasticsearch ---
+elasticsearch==8.13.0
+elasticsearch-dsl
+urllib3
+
+# --- MongoDB ---
+pymongo
+
+# --- Autogen Agents ---
+autogen-core
+autogen-ext
+
+# --- Utils ---
+python-dateutil
+pandas
+
+# --- Optional File Utilities ---
+markdownify                  # For converting docx → markdown via intermediate HTML
+
+
+kafka-python
+elasticsearch
+python-dotenv
+requests
+python-docx
+pypdf2
+langchain-text-splitters
+nltk
+tqdm
+uvicorn
+fastapi
+pydantic
