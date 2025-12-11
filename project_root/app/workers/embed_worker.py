@@ -27,15 +27,22 @@ producer = KafkaProducer(
 )
 
 def get_embedding(text: str):
-    print(f"Embedding request started for text length: {len(text)} characters") # Add this line
-    body = {"model": "nomic-embed-text", "input": text}
-    resp = requests.post(f"{OLLAMA_URL}/api/embed", json=body, timeout=120) # Use a longer timeout
+    print(f"Embedding request started for text length: {len(text)} characters")
+    
+    body = {
+        "model": "nomic-embed-text",
+        "input": [text]  # MUST be a list
+    }
+    
+    resp = requests.post(f"{OLLAMA_URL}/api/embed", json=body, timeout=120)
     resp.raise_for_status()
+    
     out = resp.json()
-    return out.get("embedding") or out
+    return out["embeddings"][0]  # MUST use embeddings
 
 
 for msg in consumer:
+    print("Message recieved in consumer :", msg)
     try:
         chunk = msg.value
         vec = get_embedding(chunk["content"])
