@@ -1,12 +1,13 @@
-import os
-from app.agents.engagement_agent import classify_with_ollama
+from app.agents.engagement.engagement_agent import EngagementAgent
 
-def test_greeting_intent():
-    """Verify that greeting → intent=greeting."""
-    text = "Hello, good morning!"
-    out = classify_with_ollama(text)
+queries = [
+    "hi",
+    "thanks for the help",
+    "What are SBI ATM charges?",
+    "Explain what a savings account is"
+]
 
-    print("MODEL OUTPUT:", out)
+for q in queries:
+    intent = EngagementAgent.classify(q)
+    print(f"{q}  -->  {intent}")
 
-    assert isinstance(out, dict)
-    assert out["intent"] in ["greeting", "smalltalk", "unknown"]

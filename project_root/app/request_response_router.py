@@ -2,11 +2,11 @@
 import asyncio
 from dataclasses import dataclass
 from typing import Any, List
-from agents.engagement_agent import classify_with_ollama
+from project_root.app.agents.engagement.engagement_agent import classify_with_ollama
 from agents.rag.embedding_client import embed_text
 from agents.rag.retriever import hybrid_retrieve
 from agents.rag.reranker_client import rerank
-from agents.rag.synthesizer import synthesize_answer
+from project_root.app.agents.rag.synthesizer_agent import synthesize_answer
 
 @dataclass
 class UserMessage:

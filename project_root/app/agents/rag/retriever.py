@@ -18,15 +18,16 @@ def bm25_search(text: str, k=50):
 
 def knn_search(vector: List[float], k=50):
     q = {
-      "size": k,
-      "query": {
+        "size": k,
         "knn": {
-          "embedding_vector": {"vector": vector, "k": k}
+            "field": "embedding_vector",
+            "query_vector": vector,
+            "k": k,
+            "num_candidates": max(200, k*5)
         }
-      }
     }
     res = es.search(index=ES_INDEX, body=q)
-    return [(h["_id"], h["_score"], h["_source"]) for h in res.get("hits",{}).get("hits",[])]
+    return [(h["_id"], h["_score"], h["_source"]) for h in res["hits"]["hits"]]
 
 def reciprocal_rank_fusion(results_lists, k=10, phi=60):
     """
