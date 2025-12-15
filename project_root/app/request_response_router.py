@@ -1,53 +1,75 @@
-# request_response_router.py
-import asyncio
-from dataclasses import dataclass
-from typing import Any, List
-from project_root.app.agents.engagement.engagement_agent import classify_with_ollama
-from agents.rag.embedding_client import embed_text
-from agents.rag.retriever import hybrid_retrieve
-from agents.rag.reranker_client import rerank
-from project_root.app.agents.rag.synthesizer_agent import synthesize_answer
+# app/request_response_router.py
 
-@dataclass
-class UserMessage:
-    user_id: str
-    session_id: str
-    current_query: str
-    roles: List[str] = None
-    conversation_history: str = ""
-    file_names: List[str] = None
+from app.agents.engagement.engagement_agent import EngagementAgent
+from app.agents.rag.retriever_agent import RetrieverAgent
+from app.agents.rag.synthesizer_agent import SynthesizerAgent
 
-async def generate_response(msg: UserMessage):
-    # 1) classify with engagement agent (LLM)
-    cls = classify_with_ollama(msg.current_query)
-    intent = cls.get("intent","unknown")
-    if intent == "greeting":
-        return {"type":"engagement","text": cls.get("follow_up","Hi! How can I help?")}
+class RequestResponseRouter:
 
-    if intent != "rag":
-        return {"type":"engagement","text": cls.get("follow_up","Could you rephrase?")}
+    @staticmethod
+    def handle(
+        user_input: str,
+        user_acl: list[str] | None = None
+    ) -> dict:
+        """
+        Entry point for the chatbot.
+        Returns a structured response dict.
+        """
 
-    # 2) embed query
-    qvec = embed_text(msg.current_query)
+        if not user_input or not user_input.strip():
+            return {
+                "type": "OUT_OF_SCOPE",
+                "response": "Please enter a valid banking-related question."
+            }
 
-    # 3) retrieve
-    hits = hybrid_retrieve(query_embedding=qvec, text_query=msg.current_query, top_k=10, acl_filter=msg.roles)
+        intent = EngagementAgent.classify(user_input)
+        print(f"[Router] Classified intent: {intent}")
 
-    # 4) optional rerank (if Jina available)
-    try:
-        reranked = rerank(msg.current_query, hits)
-    except Exception:
-        reranked = hits
+        # 1. GREETING
+        if intent == "GREETING":
+            return {
+                "type": "GREETING",
+                "response": "Hello! I can help you with bank-related questions. Please ask."
+            }
 
-    # 5) synthesize
-    answer = synthesize_answer(reranked, msg.current_query)
 
-    # 6) build response
-    response = {
-        "type":"rag",
-        "answer": answer.get("answer"),
-        "sources": answer.get("sources"),
-        "confidence": answer.get("confidence", 0.5),
-        "chunks": [h for h in reranked]
-    }
-    return response
+        # 2. BANK QUERY → RAG
+        elif intent == "BANK_QUERY":
+            retrieval = RetrieverAgent.retrieve(
+                query=user_input,
+                user_acl=user_acl or [],
+                top_k=5
+            )
+
+            if not retrieval["chunks"]:
+                return {
+                    "type": "NO_DATA",
+                    "response": (
+                        "I could not find relevant information in the available documents."
+                    )
+                }
+
+            answer = SynthesizerAgent.synthesize_answer(
+                query=user_input,
+                chunks=retrieval["chunks"]
+            )
+
+            return {
+                "type": "BANK_QUERY",
+                "response": answer,
+                "sources": [
+                    {
+                        "chunk_id": c["chunk_id"],
+                        "doc": c["metadata"].get("file_name"),
+                        "score": c["score"]
+                    }
+                    for c in retrieval["chunks"]
+                ]
+            }
+
+        # 3. Everything else → Out of scope
+        else:
+            return {
+                "type": "OUT_OF_SCOPE",
+                "response": "I can only assist with bank-related queries. Please ask a banking question."
+            }

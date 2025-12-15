@@ -12,7 +12,7 @@ class EngagementAgent:
     Classifies user intent using LLM.
     """
 
-    INTENTS = ["GREETING", "RAG_QUERY", "GENERAL_QA"]
+    INTENTS = ["GREETING", "BANK_QUERY", "OUT_OF_SCOPE"]
 
     @staticmethod
     def classify(text: str) -> str:
@@ -56,6 +56,7 @@ User input:
 
         # Hard safety fallback
         if result not in EngagementAgent.INTENTS:
-            return "RAG_QUERY"
+            return "OUT_OF_SCOPE"
+
 
         return result
