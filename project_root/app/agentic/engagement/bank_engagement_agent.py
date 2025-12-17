@@ -100,11 +100,11 @@ class BankEngagementAgent(RoutedAgent):
 
             output = EngagementOutputMessage(
                 intent=intent,
+                user_query=message.content,   # ✅ ORIGINAL QUESTION
                 response_text=response_text,
                 session_id=message.session_id,
                 user_id=message.user_id,
             )
-
             #logger.info(f"[Output] {output}")
             print(f"[BankEngagementAgent] Response:", output)
 
