@@ -28,8 +28,13 @@ class RAGRetrievalResultMessage:
     user_id: str
 
 
+class Citation(BaseModel):
+    chunk_id: str
+    file_name: str
+    chunk_content: str
+
 class FinalAnswerMessage(BaseModel):
     answer: str
-    citations: List[Dict]
+    citations: List[Citation]
     session_id: str
     user_id: str

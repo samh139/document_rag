@@ -100,11 +100,11 @@ Document excerpts:
         output = FinalAnswerMessage(
             answer=answer,
             citations=[
-                {
-                    "doc_id": c["doc_id"],
-                    "chunk_id": c["chunk_id"],
-                    "file_name": c["metadata"].get("file_name"),
-                }
+            {   
+                "chunk_id": c["chunk_id"],
+                "file_name": c["metadata"].get("file_name"),
+                "chunk_content": c["content"],
+            }
                 for c in message.chunks
             ],
             session_id=message.session_id,

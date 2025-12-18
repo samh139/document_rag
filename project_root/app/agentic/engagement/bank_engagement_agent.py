@@ -16,6 +16,7 @@ from app.agentic.topics import AgenticTopic
 from app.agentic.messages import (
     BankUserMessage,
     EngagementOutputMessage,
+    FinalAnswerMessage
 )
 
 # ------------------------------------------------------------------
@@ -73,17 +74,29 @@ class BankEngagementAgent(RoutedAgent):
         intent = resp.json().get("response", "").strip().upper()
         logger.info(f"[Classifier] Raw intent: {intent}")
 
-        if intent not in {"GREETING", "BANK_QUERY", "OUT_OF_SCOPE"}:
+        if intent not in {"GREETING", "BANK_QUERY"}:
             return "OUT_OF_SCOPE"
 
         return intent
 
     def _response_for_intent(self, intent: str) -> str:
         if intent == "GREETING":
-            return "Hello! I can help you with banking-related questions."
-        if intent == "BANK_QUERY":
+            return (
+                "Good day! 😊\n\n"
+                "I’m here to help you with banking-related questions such as "
+                "accounts, fees, charges, ATM usage, and more.\n\n"
+                "How can I assist you today?"
+            )
+
+        elif intent == "BANK_QUERY":
             return "Got it — let me check that for you."
-        return "I can only assist with banking-related questions."
+
+        else:  # OUT_OF_SCOPE
+            return (
+                "Thanks for your message. 😊\n\n"
+                "I’m currently designed to help with banking-related queries only. "
+                "Please feel free to ask anything related to banking."
+            )
 
     @message_handler
     async def handle_user_message(
@@ -92,26 +105,46 @@ class BankEngagementAgent(RoutedAgent):
         ctx: MessageContext,
     ) -> None:
 
-            print(f"[BankEngagementAgent] Received:", message.content)
-            #logger.info(f"[Input] {message}")
+        print("[BankEngagementAgent] Received:", message.content)
 
-            intent = self._classify(message.content)
-            response_text = self._response_for_intent(intent)
+        intent = self._classify(message.content)
+        response_text = self._response_for_intent(intent)
 
-            output = EngagementOutputMessage(
-                intent=intent,
-                user_query=message.content,   # ✅ ORIGINAL QUESTION
-                response_text=response_text,
+        # 🔴 TERMINAL INTENTS
+        if intent in {"GREETING", "OUT_OF_SCOPE"}:
+            final = FinalAnswerMessage(
+                answer=response_text,
+                citations=[],
                 session_id=message.session_id,
                 user_id=message.user_id,
             )
-            #logger.info(f"[Output] {output}")
-            print(f"[BankEngagementAgent] Response:", output)
 
             await self.publish_message(
-                output,
+                final,
                 topic_id=TopicId(
-                    AgenticTopic.ENGAGEMENT_OUTPUT.value,
+                    AgenticTopic.FINAL_RESPONSE.value,
                     source=self.id.key,
                 ),
             )
+
+            print("[BankEngagementAgent] Final response published, pipeline terminated")
+            return
+
+        # 🟢 BANK_QUERY → RAG
+        output = EngagementOutputMessage(
+            intent=intent,
+            user_query=message.content,
+            response_text=response_text,
+            session_id=message.session_id,
+            user_id=message.user_id,
+        )
+
+        print("[BankEngagementAgent] Routing to RAG:", output)
+
+        await self.publish_message(
+            output,
+            topic_id=TopicId(
+                AgenticTopic.ENGAGEMENT_OUTPUT.value,
+                source=self.id.key,
+            ),
+        )
