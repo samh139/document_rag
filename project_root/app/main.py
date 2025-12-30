@@ -8,7 +8,6 @@ from app.agentic.collectors.final_answer_collector import FinalAnswerCollector
 from app.agentic.engagement.bank_engagement_agent import BankEngagementAgent
 from app.agentic.rag.bank_rag_retrieval_agent import BankRAGRetrievalAgent
 from app.agentic.rag.bank_rag_synthesis_agent import BankRAGSynthesisAgent
-from app.agentic.rag.query_refiner_agent import QueryRefinerAgent
 
 
 app = FastAPI(title="Banking RAG Assistant")
@@ -19,10 +18,6 @@ async def startup_event():
     # Register agents ONCE
     await BankEngagementAgent.register(
         runtime, "bank_engagement", BankEngagementAgent
-    )
-
-    await QueryRefinerAgent.register(
-    runtime, "query_refiner", QueryRefinerAgent,
     )
 
     await BankRAGRetrievalAgent.register(
