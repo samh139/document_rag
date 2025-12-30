@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 @dataclass
@@ -38,3 +38,6 @@ class FinalAnswerMessage(BaseModel):
     citations: List[Citation]
     session_id: str
     user_id: str
+    user_query: str
+
+
