@@ -18,13 +18,21 @@ STM_SUMMARY_MODEL = os.getenv("STM_SUMMARY_MODEL", "gemma3:4b")
 # Defaults
 OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "120"))
 
-def fire_fast_modal_request_chat_for_force_json(system_prompt:str,user_prompt:str)->str:
-    response = requests.post(f"{OLLAMA_URL}", json={
-    "model_name": STM_SUMMARY_MODEL,
-    "system_prompt": system_prompt,
-    "user_prompt":user_prompt
-})
-    return response.text
+def fire_fast_modal_request_chat_for_force_json(system_prompt: str, user_prompt: str) -> str:
+    payload = {
+        "model": STM_SUMMARY_MODEL,          # ✅ correct key
+        "prompt": f"{system_prompt}\n\n{user_prompt}",  # ✅ merged prompt
+        "stream": False,
+    }
+
+    response = requests.post(
+        f"{OLLAMA_URL}/api/generate",
+        json=payload,
+        timeout=OLLAMA_TIMEOUT,
+    )
+    response.raise_for_status()
+    return response.json().get("response", "")
+
 
 def extract_json_from_llm_output(text: str):
     """
@@ -143,7 +151,29 @@ def extract_json_from_llm_output(text: str):
         ) from e
 
 
-def fire_fast_modal_request_chat_get_dict(system_prompt:str,user_prompt:str)->Dict:
-    result_text = fire_fast_modal_request_chat_for_force_json(system_prompt=system_prompt,user_prompt=user_prompt)
-    result_dict=extract_json_from_llm_output(text=result_text)
-    return result_dict
+def fire_fast_modal_request_chat_get_dict(system_prompt: str, user_prompt: str) -> Dict:
+    text = fire_fast_modal_request_chat(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt
+    )
+    return extract_json_from_llm_output(text)
+
+
+def fire_fast_modal_request_chat(system_prompt: str, user_prompt: str) -> str:
+    payload = {
+        "model": STM_SUMMARY_MODEL,
+        "prompt": f"{system_prompt}\n\n{user_prompt}",
+        "stream": False,
+    }
+
+    response = requests.post(
+        f"{OLLAMA_URL}/api/generate",
+        json=payload,
+        timeout=OLLAMA_TIMEOUT,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+
+    # ✅ ALWAYS return only clean text
+    return data.get("response", "").strip()

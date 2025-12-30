@@ -2,7 +2,7 @@ import json
 from typing import Dict, List
 from app.memory_team.stm.redis_client import redis_client
 
-SLIDING_WINDOW_SIZE = 10
+SLIDING_WINDOW_SIZE = 5
 def get_stm(session_id: str,user_id:str = "12345"):
     key = f"stm:{user_id}:{session_id}"
     data = redis_client.get(key)
