@@ -2,12 +2,15 @@
 from datetime import datetime
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
-from app_utils.basic_util import normalize_scores
-from app_configs.app_env import app_env
+from app.utils.basic_utils import normalize_scores
+#from app_configs.app_env import app_env
 
 import numpy as np
 
-es = Elasticsearch(app_env.get_es_host())
+es_host="http://localhost:9200"
+es_ltm_index="conversations"
+es = Elasticsearch(es_host)
+
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def store_conversation_to_es(user_id:str,session_id: str, user_message: str, bot_response: str) -> str:
@@ -28,7 +31,7 @@ def store_conversation_to_es(user_id:str,session_id: str, user_message: str, bot
         "timestamp": datetime.utcnow().isoformat()
     }
 
-    res = es.index(index=app_env.get_es_ltm_index(), document=doc)
+    res = es.index(index=es_ltm_index, document=doc)
     return res["_id"]
     
 def _parse_ltm_hits(hits: list[dict], score_key: str = "semantic_score") -> list[dict]:
@@ -67,7 +70,7 @@ def fetch_from_ltm( query: str, user_id: str, session_id: str, top_k: int = 10) 
         "_source": {"excludes": ["user_embedding", "bot_embedding", "combined_embedding"]}
     }
 
-    res = es.search(index=app_env.get_es_ltm_index(), body=request_body)
+    res = es.search(index=es_ltm_index, body=request_body)
     return _parse_ltm_hits(res["hits"]["hits"], score_key="bm_score")
 
 def fetch_knn_from_ltm( query: str, user_id: str, session_id: str, top_k: int = 10) -> list[dict]:
@@ -87,7 +90,7 @@ def fetch_knn_from_ltm( query: str, user_id: str, session_id: str, top_k: int = 
         "_source": {"excludes": ["user_embedding", "bot_embedding", "combined_embedding"]}
     }
 
-    res = es.search(index=app_env.get_es_ltm_index(), body=request_body)
+    res = es.search(index=es_ltm_index, body=request_body)
     candidates = _parse_ltm_hits(res["hits"]["hits"], score_key="semantic_score")
     print(f"KNN candidates before filtering: {len(candidates)}")
     # Filter based on raw semantic score threshold before normalization

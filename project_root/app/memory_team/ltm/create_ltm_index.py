@@ -1,9 +1,12 @@
+#app/memory_team/ltm/create_ltm_index.py
+
 from elasticsearch import Elasticsearch
-from app_configs.app_env import app_env
 
-es = Elasticsearch(hosts=[app_env.get_es_host()])
+es_host="http://localhost:9200"
+es_ltm_index="conversations"
+es = Elasticsearch(es_host)
 
-index_name = app_env.get_es_ltm_index()
+index_name = es_ltm_index
 
 mapping = {
     "mappings": {
@@ -19,6 +22,7 @@ mapping = {
         }
     }
 } 
+
 
 # Create the index if it doesn't exist
 if not es.indices.exists(index=index_name):

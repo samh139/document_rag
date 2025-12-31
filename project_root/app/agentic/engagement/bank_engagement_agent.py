@@ -117,6 +117,7 @@ class BankEngagementAgent(RoutedAgent):
                 citations=[],
                 session_id=message.session_id,
                 user_id=message.user_id,
+                user_query=message.content,
             )
 
             await self.publish_message(
@@ -139,7 +140,7 @@ class BankEngagementAgent(RoutedAgent):
             user_id=message.user_id,
         )
 
-        print("[BankEngagementAgent] Routing to RAG:", output)
+        print("[BankEngagementAgent] Routing to QueryRefiner:", output)
 
         await self.publish_message(
             output,
@@ -148,3 +149,4 @@ class BankEngagementAgent(RoutedAgent):
                 source=self.id.key,
             ),
         )
+        print("[BankEngagementAgent] Message published to ENGAGEMENT_OUTPUT topic")

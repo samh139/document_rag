@@ -8,16 +8,24 @@ from app.agentic.collectors.final_answer_collector import FinalAnswerCollector
 from app.agentic.engagement.bank_engagement_agent import BankEngagementAgent
 from app.agentic.rag.bank_rag_retrieval_agent import BankRAGRetrievalAgent
 from app.agentic.rag.bank_rag_synthesis_agent import BankRAGSynthesisAgent
-
+from app.agentic.query_refiner.query_refiner_agent import QueryRefinerAgent
+from app.memory_team.ltm.index_bootstrap import ensure_ltm_index
 
 app = FastAPI(title="Banking RAG Assistant")
 
 
 @app.on_event("startup")
 async def startup_event():
+    ## Ensure LTM index exists
+    ensure_ltm_index()
+    
     # Register agents ONCE
     await BankEngagementAgent.register(
         runtime, "bank_engagement", BankEngagementAgent
+    )
+
+    await QueryRefinerAgent.register(
+        runtime, "query_refiner", QueryRefinerAgent
     )
 
     await BankRAGRetrievalAgent.register(

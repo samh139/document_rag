@@ -11,7 +11,7 @@ from autogen_core import (
 
 from app.agentic.topics import AgenticTopic
 from app.agentic.messages import (
-    EngagementOutputMessage,
+    RefinedQueryMessage,
     RAGRetrievalResultMessage,
 )
 
@@ -22,7 +22,7 @@ logger = logging.getLogger("BankRAGRetrievalAgent")
 logging.basicConfig(level=logging.INFO)
 
 
-@type_subscription(topic_type=AgenticTopic.ENGAGEMENT_OUTPUT.value)
+@type_subscription(topic_type=AgenticTopic.REFINED_QUERY_TOPIC.value)
 class BankRAGRetrievalAgent(RoutedAgent):
 
     def __init__(self) -> None:
@@ -31,7 +31,7 @@ class BankRAGRetrievalAgent(RoutedAgent):
     @message_handler
     async def handle_engagement_output(
         self,
-        message: EngagementOutputMessage,
+        message: RefinedQueryMessage,
         ctx: MessageContext,
     ) -> None:
 
@@ -45,9 +45,12 @@ class BankRAGRetrievalAgent(RoutedAgent):
         logger.info(
             f"[RAG] Retrieving documents for session={message.session_id}"
         )
-        print(f"User Query from RAGRetrievalAgent: {message.user_query}")
+        print(f"Refined User Query from RAGRetrievalAgent: {message.refined_query}")
+        logger.info(f"Original: {message.original_query}")
+        logger.info(f"Refined: {message.refined_query}")
+
         retrieval = RetrieverAgent.retrieve(
-            query=message.user_query,  # or original query if you store it later
+            query=message.refined_query,  # or original query if you store it later
             user_acl=[],
             top_k=5,
         )
@@ -57,7 +60,7 @@ class BankRAGRetrievalAgent(RoutedAgent):
         logger.info(f"[RAG] Retrieved {len(chunks)} chunks")
 
         output = RAGRetrievalResultMessage(
-            query=message.user_query,
+            query=message.refined_query,
             chunks=chunks,
             session_id=message.session_id,
             user_id=message.user_id,
