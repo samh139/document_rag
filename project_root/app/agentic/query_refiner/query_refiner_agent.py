@@ -21,8 +21,8 @@ logger = logging.getLogger("QueryRefinerAgent")
 system_prompt = """
 You are a Query Refinement Agent.
 
-Your task is to rewrite the user's current query into a precise retrieval query
-that preserves the user's ORIGINAL intent.
+Your task is to rewrite the user's current query into a clean,
+search-optimized retrieval query.
 
 STRICT RULES:
 - Do NOT introduce new entities (country, person, bank, currency, location)
@@ -32,7 +32,10 @@ STRICT RULES:
 - Use Long-Term Memory ONLY if it refers to the SAME entity as the current query
 - If Long-Term Memory is about a DIFFERENT topic, IGNORE it completely
 - Do NOT answer the user
+- **If no additional context is available, return a minimally cleaned
+version of the original query.**
 - Output ONE refined query only
+No explanations.
 """
 
 
@@ -74,10 +77,10 @@ class QueryRefinerAgent(RoutedAgent):
         {message.user_query}
 
         Short-Term Memory Summary:
-        {stm_summary.get("conversation_summary")}
+        {stm_summary.get("conversation_summary") or "None"}
 
         Conversation Entities:
-        {stm_summary.get("conversation_entities")}
+        {stm_summary.get("conversation_entities") or "None"}
 
         Relevant Long-Term Memory:
         {[{"user": r["user_message"], "bot": r["bot_response"]} for r in ltm_results]}
