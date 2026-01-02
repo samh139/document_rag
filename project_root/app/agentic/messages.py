@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
-@dataclass
-class BankUserMessage:
+
+class BankUserMessage(BaseModel):
     content: str
     session_id :str
     user_id: str
@@ -20,8 +20,7 @@ class EngagementOutputMessage(BaseModel):
     user_id: str
 
 
-@dataclass
-class RAGRetrievalResultMessage:
+class RAGRetrievalResultMessage(BaseModel):
     query: str
     chunks: List[Dict[str, Any]]
     session_id: str
@@ -38,3 +37,13 @@ class FinalAnswerMessage(BaseModel):
     citations: List[Citation]
     session_id: str
     user_id: str
+    user_query: str
+
+
+class RefinedQueryMessage(BaseModel):
+    original_query: str
+    intent: str
+    refined_query: str
+    session_id: str
+    user_id: str
+

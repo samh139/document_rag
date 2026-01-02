@@ -39,3 +39,6 @@ torch
 
 # Development
 pytest
+
+##UI
+streamlit

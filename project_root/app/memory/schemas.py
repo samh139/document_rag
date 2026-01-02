@@ -1,11 +1,11 @@
 # app/memory/schemas.py
 
 from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 
 class ConversationTurn(BaseModel):
     user: str
     assistant: str
-    timestamp: datetime
-    metadata: Optional[Dict] = {}
+    timestamp: str
+    metadata: Dict = {}

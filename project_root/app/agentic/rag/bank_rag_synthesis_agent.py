@@ -109,6 +109,7 @@ Document excerpts:
             ],
             session_id=message.session_id,
             user_id=message.user_id,
+            user_query=message.query
         )
 
         await self.publish_message(
