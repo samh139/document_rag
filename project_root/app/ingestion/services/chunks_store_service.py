@@ -8,6 +8,8 @@ from pathlib import Path
 from app.core.utils.file_utils import read_text_file, extract_text_from_docx, extract_text_from_pdf
 from app.ingestion.chunkers.splitters import get_splitters
 from dotenv import load_dotenv
+import hashlib
+
 
 load_dotenv("app/config/secrets.env")
 
@@ -33,7 +35,7 @@ class Job:
         self.acl = acl or ["ROLE_USER"]
         self.etag = str(uuid.uuid4())
 
-def make_chunks_from_text(text: str, chunk_size=1500, overlap=150):
+def make_chunks_from_text(text: str, chunk_size=800, overlap=100):
     splitter = get_splitters(chunk_size, overlap)
     return [c.page_content for c in splitter.create_documents([text])]
 
@@ -53,6 +55,7 @@ def ingest_file(job: Job):
             "file_name": job.file_name,
             "chunk_id": f"{job.file_id}_chunk_{i}",
             "content": chunk_text,
+            "content_hash": hashlib.sha1(chunk_text.strip().encode("utf-8")).hexdigest(),
             "page": None,
             "owner": job.owner,
             "acl": job.acl,
