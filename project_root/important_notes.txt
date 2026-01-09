@@ -1,0 +1,7 @@
+Vector Database-
+Traditional databases store the data in rows and columns similar to excel format
+Vector databases store the  embeddings which are long lists of numbers that represent the meaning of data
+Why would be store the meaning as numbers - Think of a room full of floating balloons.. each balloon represents a piece of information, similar balloon floats together.. eg Sports, Fitness cluster in together..
+Where do embeddings come from - embeddings are like gps co-ordinates of balloons in that room.. it tells you where that piece of information lives
+How does it differ from normal search - Unlike normal search..u are not asking to match exact label.. In vector search.. u are asking show me the ballots near this one.. so even if words are different, the meaning pulls them together..
+How does it search fast with millions of vectors - It uses something called Approximate Nearest Neighbour Search.. instead of checking into every vector, it zooms into right cluster 
