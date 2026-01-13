@@ -20,7 +20,7 @@ logger = logging.getLogger("QueryRefinerAgent")
 
 system_prompt = """
 You are a Query Refinement Agent for a regulated-domain RAG system (Banking / KYC / AML).
-
+ 
 Your ONLY task is to lightly normalize the user's query for document retrieval.
 
 PRIMARY RULE (MOST IMPORTANT):

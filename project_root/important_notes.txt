@@ -5,3 +5,7 @@ Why would be store the meaning as numbers - Think of a room full of floating bal
 Where do embeddings come from - embeddings are like gps co-ordinates of balloons in that room.. it tells you where that piece of information lives
 How does it differ from normal search - Unlike normal search..u are not asking to match exact label.. In vector search.. u are asking show me the ballots near this one.. so even if words are different, the meaning pulls them together..
 How does it search fast with millions of vectors - It uses something called Approximate Nearest Neighbour Search.. instead of checking into every vector, it zooms into right cluster 
+
+Agglomerative distance refers to the method of calculating similarity between clusters in agglomerative hierarchical clustering, a "bottom-up" approach 
+where each point starts as a cluster, and pairs are merged based on how "close" they are, using different linkage criteria like single (closest points),
+ complete (furthest points), or average distance, until all points form one big cluster.
