@@ -19,7 +19,8 @@ from app.memory_team.clustering.config import (
     CHUNKS_INDEX,
     AGGLOMERATIVE_MIN_CLUSTER_SIZE,
     SUBCLUSTER_MIN_SIZE,
-    CLUSTERS_ALIAS
+    CLUSTERS_ALIAS,
+    EMBEDDING_DIM
 )
 
 from app.memory_team.clustering.vector_loader import load_all_vectors_and_ids
@@ -28,6 +29,7 @@ from app.memory_team.clustering.kmeans_subclusters import build_subclusters_for_
 from app.memory_team.clustering.es_writer import ESWriter
 from app.app_logger import LoggerFactory
 logger = LoggerFactory.get_logger("cluster_builder")
+
 
 
 # ---------------------------------------------------------
@@ -67,6 +69,10 @@ def build_all_clusters(es_writer: ESWriter):
     """
     logger.info("[BUILDER] Loading vectors from chunks_es...")
     vectors, chunk_ids = load_all_vectors_and_ids()
+
+    assert vectors.shape[1] == EMBEDDING_DIM, (
+    f"Embedding dim mismatch: {vectors.shape[1]} != {EMBEDDING_DIM}"
+)
 
     N = len(chunk_ids)
     logger.info(f"[BUILDER] Loaded {N} vectors for clustering")

@@ -4,7 +4,7 @@
 # ---------------------------------------------------------
 
 from elasticsearch import Elasticsearch
-from app.memory_team.clustering.config import ES_HOST
+from app.memory_team.clustering.config import ES_HOST, EMBEDDING_DIM
 from app.app_logger import LoggerFactory
 logger = LoggerFactory.get_logger("es_writer")
 
@@ -29,8 +29,9 @@ class ESWriter:
     # -----------------------------------------------------
     # Create index
     # -----------------------------------------------------
+
     def create_index(self, index_name: str):
-        logger.info(f"[ES] Creating index: {index_name}")
+        logger.info(f"[ES] Creating index: {index_name} (dims={EMBEDDING_DIM})")
 
         body = {
             "mappings": {
@@ -40,7 +41,7 @@ class ESWriter:
                     "parent_cluster": {"type": "keyword"},
                     "vector": {
                         "type": "dense_vector",
-                        "dims": 384,
+                        "dims": EMBEDDING_DIM,
                         "index": True,
                         "similarity": "cosine",
                     },
@@ -53,7 +54,7 @@ class ESWriter:
         }
 
         self.es.indices.create(index=index_name, body=body, ignore=400)
-
+    
     # -----------------------------------------------------
     # Write a cluster doc
     # -----------------------------------------------------

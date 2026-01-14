@@ -23,6 +23,8 @@ ES_HOST = os.getenv("ES_HOST","http://localhost:9200")
 # ----------------------------------------------------------------------
 # Source index for chunked embeddings
 CHUNKS_INDEX = "dsprawl_documents"
+EMBEDDING_DIM = 768   # <-- set this to the ACTUAL dim of nomic-embed-text
+
 
 # Alias pointing to the active cluster index
 CLUSTERS_ALIAS = "clusters_v2"
