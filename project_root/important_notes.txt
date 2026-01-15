@@ -9,3 +9,108 @@ How does it search fast with millions of vectors - It uses something called Appr
 Agglomerative distance refers to the method of calculating similarity between clusters in agglomerative hierarchical clustering, a "bottom-up" approach 
 where each point starts as a cluster, and pairs are merged based on how "close" they are, using different linkage criteria like single (closest points),
  complete (furthest points), or average distance, until all points form one big cluster.
+
+
+ Retrieval using Clusters-
+ 6️⃣ Why two levels?
+
+Because retrieval is hierarchical.
+
+Level-1 (Root cluster) → coarse routing
+
+Question:
+
+“Which broad topic does this query belong to?”
+
+You compare:
+
+query_vector  vs  all root cluster vectors
+
+
+You select top-K root clusters.
+
+This is:
+
+Very fast (few clusters)
+
+Very coarse (big semantic buckets)
+
+Level-2 (Subclusters) → fine routing
+
+Inside selected root clusters, you compare:
+
+query_vector vs subcluster vectors
+
+
+Now you select:
+
+2–5 subclusters per root cluster
+
+This narrows the search to hundreds instead of thousands of chunks.
+
+Without clusters
+
+BM25 over 100k chunks
+
+Vector search over 100k vectors
+
+RRF merges garbage + signal
+
+With clusters
+
+BM25 over maybe 2–3k chunks
+
+Vector search over same subset
+
+RRF becomes sharp and stable
+
+Level 1
+
+Root clusters
+
+Each has:
+
+vector → centroid of many chunks
+
+Represents a coarse topic region
+
+Level 2
+
+Subclusters
+
+Each has:
+
+vector → KMeans center
+
+Represents a fine-grained semantic pocket
+
+RefinedQueryMessage
+        ↓
+ClusterRouter
+        ↓
+restrict_ids
+        ↓
+RetrieverAgent.retrieve(..., restrict_ids)
+
+
+
+User
+ ↓
+QueryRefiner
+ ↓
+ClusterRouterAgent
+ ├─ Case A: confident cluster routing
+ │      ↓
+ │  restrict_ids ≠ None
+ │      ↓
+ │  BankRAGRetrievalAgent
+ │      ↓
+ │  Answer
+ │
+ └─ Case B: low confidence / ambiguous
+        ↓
+    ClarificationAgent
+        ↓
+    User answers
+        ↓
+    Loop back to QueryRefiner → ClusterRouter

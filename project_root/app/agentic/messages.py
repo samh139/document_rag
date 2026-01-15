@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Literal
 
 
 
@@ -47,3 +47,13 @@ class RefinedQueryMessage(BaseModel):
     session_id: str
     user_id: str
 
+
+class ClusterRoutedQueryMessage(BaseModel):
+    original_query: str
+    refined_query: str
+    intent: str
+    routing_decision: Literal["ROUTE", "CLARIFY"]
+    restrict_ids: Optional[List[str]] = None
+    candidate_clusters: Optional[List[Dict[str, Any]]] = None
+    session_id: str
+    user_id: str
