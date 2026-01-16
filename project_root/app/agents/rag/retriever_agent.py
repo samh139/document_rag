@@ -3,7 +3,7 @@
 from typing import List, Dict
 from app.agents.rag.embedding_client import embed_text
 from app.agents.rag.retriever import hybrid_retrieve
-
+from typing import Optional
 
 class RetrieverAgent:
     """
@@ -15,7 +15,8 @@ class RetrieverAgent:
     def retrieve(
         query: str,
         user_acl: List[str],
-        top_k: int = 5
+        top_k: int = 5,
+        restrict_ids: Optional[List[str]] = None,
     ) -> Dict:
         # 1. Embed query
         query_vector = embed_text(query)
@@ -25,7 +26,8 @@ class RetrieverAgent:
             query_embedding=query_vector,
             text_query=query,
             top_k=top_k,
-            acl_filter=user_acl
+            acl_filter=user_acl,
+            restrict_ids=restrict_ids,  
         )
 
         # 3. Normalize output

@@ -11,8 +11,10 @@ from autogen_core import (
 
 from app.agentic.topics import AgenticTopic
 from app.agentic.messages import (
-    RefinedQueryMessage,
-    RAGRetrievalResultMessage,
+    ClusterRoutedQueryMessage, RAGRetrievalResultMessage
+)
+from app.memory_team.clustering.cluster_resolver import (
+    resolve_cluster_ids_to_chunk_ids
 )
 
 # 🔁 Import your existing retriever
@@ -22,37 +24,38 @@ logger = logging.getLogger("BankRAGRetrievalAgent")
 logging.basicConfig(level=logging.INFO)
 
 
-@type_subscription(topic_type=AgenticTopic.REFINED_QUERY_TOPIC.value)
+@type_subscription(topic_type=AgenticTopic.CLUSTER_ROUTED_QUERY_TOPIC.value)
 class BankRAGRetrievalAgent(RoutedAgent):
 
     def __init__(self) -> None:
         super().__init__("BankRAGRetrievalAgent")
 
     @message_handler
-    async def handle_engagement_output(
+    async def handle_cluster_routed_query(
         self,
-        message: RefinedQueryMessage,
+        message: ClusterRoutedQueryMessage,
         ctx: MessageContext,
     ) -> None:
 
-        # Guardrail — act only on BANK_QUERY
         if message.intent != "BANK_QUERY":
-            logger.info(
-                f"[RAG] Skipping intent={message.intent} for session={message.session_id}"
-            )
             return
 
-        logger.info(
-            f"[RAG] Retrieving documents for session={message.session_id}"
+        # 🚦 CASE B — ambiguous → clarification later
+        if message.restrict_cluster_ids is None:
+            logger.info("[RAG] No cluster restriction → clarification needed")
+            return  # ClarificationAgent will handle this
+
+        # 🚀 CASE A — resolve clusters → chunks
+        restrict_ids = resolve_cluster_ids_to_chunk_ids(
+            cluster_ids=message.restrict_cluster_ids,
+            expand_level2=True,
         )
-        print(f"Refined User Query from RAGRetrievalAgent: {message.refined_query}")
-        logger.info(f"Original: {message.original_query}")
-        logger.info(f"Refined: {message.refined_query}")
 
         retrieval = RetrieverAgent.retrieve(
-            query=message.refined_query,  # or original query if you store it later
+            query=message.refined_query,
             user_acl=[],
             top_k=5,
+            restrict_ids=restrict_ids,  # 🔥 NEW
         )
 
         chunks = retrieval.get("chunks", [])

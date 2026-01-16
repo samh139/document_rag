@@ -52,8 +52,8 @@ class ClusterRoutedQueryMessage(BaseModel):
     original_query: str
     refined_query: str
     intent: str
-    routing_decision: Literal["ROUTE", "CLARIFY"]
-    restrict_ids: Optional[List[str]] = None
-    candidate_clusters: Optional[List[Dict[str, Any]]] = None
+    restrict_cluster_ids: Optional[List[str]]
+    routing_confidence: float
+    routing_level: Optional[int]
     session_id: str
     user_id: str
