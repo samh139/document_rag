@@ -1,50 +1,45 @@
-# ---------------------------------------------------------
-# Cluster Summarizer
-# ---------------------------------------------------------
-# Converts a cluster's chunks into:
-#   - summary_text
-#   - summary_vector (used for retrieval)
-# ---------------------------------------------------------
+import os
+import requests
+from typing import List
 
-from app.embedding import embed_text  # reuse your embedder
-from app.storage.chunk_store import get_chunks_by_ids
-from app.llm import call_llm
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+SUMMARY_MODEL = os.getenv("SUMMARY_MODEL", "gemma3:12b")
 
-def summarize_cluster(cluster_doc: dict) -> dict:
-    """
-    Enriches a cluster with semantic meaning.
-    DOES NOT mutate storage directly.
-    """
+SYSTEM_PROMPT = """
+You are generating short semantic labels for document clusters.
 
-    chunk_ids = cluster_doc["chunk_ids"]
+Rules:
+- Output ONE short summary (1-2 sentences)
+- Describe what kind of user questions this cluster answers
+- Do NOT use punctuation
+- Do NOT mention documents or chunks
+"""
 
-    # 1️⃣ Load raw chunk texts
-    chunks = get_chunks_by_ids(chunk_ids)
-    texts = [c["text"] for c in chunks]
+def summarize_cluster(chunk_texts: List[str]) -> str:
+    excerpts = "\n\n".join(
+        f"- {text[:500]}" for text in chunk_texts
+    )
 
-    # 2️⃣ Build summarization prompt
     prompt = f"""
-    You are summarizing a group of related banking/KYC documents.
+{SYSTEM_PROMPT}
 
-    TASK:
-    - Identify the common topic
-    - Produce a concise, retrieval-optimized summary
-    - Do NOT mention document structure
-    - Do NOT mention "this cluster"
+Document excerpts:
+{excerpts}
 
-    DOCUMENTS:
-    {' '.join(texts[:20])}   # cap for safety
-    """
+Cluster label:
+"""
 
-    # 3️⃣ Call LLM
-    summary_text = call_llm(prompt).strip()
+    payload = {
+        "model": SUMMARY_MODEL,
+        "prompt": prompt,
+        "stream": False,
+    }
 
-    # 4️⃣ Embed summary
-    summary_vector = embed_text(summary_text)
+    resp = requests.post(
+        f"{OLLAMA_URL}/api/generate",
+        json=payload,
+        timeout=90,
+    )
+    resp.raise_for_status()
 
-    # 5️⃣ Attach to cluster doc
-    cluster_doc["summary_text"] = summary_text
-    cluster_doc["summary_vector"] = summary_vector
-    cluster_doc["vector"] = summary_vector   # 🔥 KEY LINE
-
-    return cluster_doc
+    return resp.json().get("response", "").strip()

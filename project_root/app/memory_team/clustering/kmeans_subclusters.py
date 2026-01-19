@@ -10,6 +10,8 @@ from sklearn.cluster import KMeans
 
 from app.app_logger import LoggerFactory
 from app.memory_team.clustering.es_writer import ESWriter
+from app.memory_team.clustering.cluster_summarizer import summarize_cluster
+from app.memory_team.clustering.chunk_fetcher import fetch_chunk_texts
 
 logger = LoggerFactory.get_logger("kmeans_subclusters")
 
@@ -138,7 +140,27 @@ def build_subclusters_for_root_cluster(
         vectors=vectors,
         chunk_ids=chunk_ids,
     )
+    # 2️⃣ Enrich subclusters with summaries
+    for sub_doc in sub_docs:
+        sub_chunk_ids = sub_doc["chunk_ids"]
 
+        # Fetch representative texts
+        sample_texts = fetch_chunk_texts(sub_chunk_ids, limit=6)
+        print(f"Sample texts for subcluster {sub_doc['cluster_id']}: {sample_texts}")
+
+        if sample_texts:
+            try:
+                summary = summarize_cluster(sample_texts)
+                sub_doc["summary"] = summary
+            except Exception as e:
+                logger.warning(
+                    f"[SUBCLUSTER] Summary failed for {sub_doc['cluster_id']}: {e}"
+                )
+                # IMPORTANT: do NOT inject generic junk
+        else:
+            logger.warning(
+                f"[SUBCLUSTER] No sample texts for {sub_doc['cluster_id']}"
+            )
     write_subclusters_to_es(
         es_writer=es_writer,
         root_cluster_id=parent_cluster_id,

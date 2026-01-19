@@ -23,11 +23,14 @@ from app.memory_team.clustering.config import (
     EMBEDDING_DIM
 )
 
-from app.memory_team.clustering.vector_loader import load_all_vectors_and_ids
+from app.memory_team.clustering.vector_loader import load_all_vectors_and_ids , get_es_connection
 from app.memory_team.clustering.agglomerative import run_agglomerative_clustering
 from app.memory_team.clustering.kmeans_subclusters import build_subclusters_for_root_cluster
 from app.memory_team.clustering.es_writer import ESWriter
 from app.app_logger import LoggerFactory
+from app.memory_team.clustering.cluster_summarizer import summarize_cluster
+from app.memory_team.clustering.chunk_fetcher import fetch_chunk_texts
+
 logger = LoggerFactory.get_logger("cluster_builder")
 
 
@@ -93,12 +96,29 @@ def build_all_clusters(es_writer: ESWriter):
         # vectors of members
         member_vecs = vectors[member_indices]
         member_ids = [chunk_ids[i] for i in member_indices]
+        print("Member IDs Generated:", len(member_ids))
 
         centroid = np.mean(member_vecs, axis=0)
         #assert centroid.shape[0] == 384
 
+        # 1️⃣ Fetch representative chunk texts
+        sample_texts = fetch_chunk_texts(member_ids, limit=8)
+        #print(f"Sample texts for cluster {root_id}: {sample_texts}")
+
+        # 2️⃣ Generate summary (safe fallback)
+        if sample_texts:
+            try:
+                summary = summarize_cluster(sample_texts)
+            except Exception:
+                summary = "General banking documentation"
+        else:
+            summary = "General banking documentation"
+
         # Build parent doc
         root_doc = make_root_cluster_doc(root_id, centroid, member_ids)
+
+        # 4️⃣ Attach summary
+        root_doc["summary"] = summary
 
         # Write root cluster doc
         es_writer.write_cluster_doc(
@@ -117,6 +137,7 @@ def build_all_clusters(es_writer: ESWriter):
         if len(member_ids) >= SUBCLUSTER_MIN_SIZE:
             logger.info(f"[BUILDER] Subclustering {root_id} "
                         f"(size={len(member_ids)})...")
+            
 
             sub_docs = build_subclusters_for_root_cluster(
                 es_writer=es_writer,

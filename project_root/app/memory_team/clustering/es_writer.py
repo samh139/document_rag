@@ -39,6 +39,7 @@ class ESWriter:
                     "cluster_id": {"type": "keyword"},
                     "level": {"type": "integer"},
                     "parent_cluster": {"type": "keyword"},
+                    "summary": {"type": "text"},
                     "vector": {
                         "type": "dense_vector",
                         "dims": EMBEDDING_DIM,
