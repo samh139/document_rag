@@ -55,5 +55,11 @@ class ClusterRoutedQueryMessage(BaseModel):
     restrict_cluster_ids: Optional[List[str]]
     routing_confidence: float
     routing_level: Optional[int]
+    candidate_clusters: Optional[List[dict]] = None  # 🔥 REQUIRED for clarification
+    session_id: str
+    user_id: str
+
+class ClarificationQuestionMessage(BaseModel):
+    question: str
     session_id: str
     user_id: str
