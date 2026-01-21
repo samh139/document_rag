@@ -20,6 +20,8 @@ from app.agentic.messages import (
 from app.agents.rag.embedding_client import embed_text
 from app.memory_team.clustering.vector_loader import get_es_connection
 import requests
+from app.memory_team.stm.store import set_clarification_context
+
 
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -84,6 +86,39 @@ class ClusterRouterAgent(RoutedAgent):
     # -----------------------------
     def _search_level1_clusters(self, query_vector: List[float]) -> List[dict]:
         body = {
+            "knn": {
+                "field": "vector",
+                "query_vector": query_vector,
+                "k": TOP_K,
+                "num_candidates": 50,
+            },
+            "query": {
+                "term": {"level": 1}
+            },
+            "_source": ["cluster_id", "summary", "meta_stats"]
+        }
+
+        res = self.es.search(
+            index="clusters_v2",
+            body=body,
+        )
+
+        hits = res.get("hits", {}).get("hits", [])
+        results = []
+
+        for h in hits:
+            src = h["_source"]
+            results.append({
+                "cluster_id": src["cluster_id"],
+                "score": float(h["_score"]),
+                "chunk_count": src.get("meta_stats", {}).get("chunk_count", 0),
+                "summary": src.get("summary", ""),
+            })
+
+        return results
+    '''
+    def _search_level1_clusters(self, query_vector: List[float]) -> List[dict]:
+        body = {
             "size": TOP_K,
             "query": {
                 "bool": {
@@ -122,6 +157,7 @@ class ClusterRouterAgent(RoutedAgent):
             })
 
         return results
+    '''
 
     # -----------------------------
     def _decide_routing(
@@ -152,9 +188,29 @@ class ClusterRouterAgent(RoutedAgent):
                 or score_gap >= MIN_SCORE_GAP
             )
         )
-
+        '''
         if not confident_ann:
             return self._ambiguous(message, confidence=top["score"], candidate_clusters=clusters[:2])
+        '''
+
+        if not confident_ann:
+            logger.info(
+                "[ClusterRouter] ANN not confident → writing clarification context"
+            )
+
+            set_clarification_context(
+                session_id=message.session_id,
+                user_id=message.user_id,
+                reason="ann_confidence_low",
+                candidate_clusters=clusters[:2],
+            )
+
+            return self._ambiguous(
+                message,
+                confidence=top["score"],
+                candidate_clusters=clusters[:2],
+            )
+
         
         # 🔒 NEW: Summary-aware routing gate
         summary_allows = self._summary_allows_routing(
@@ -162,12 +218,32 @@ class ClusterRouterAgent(RoutedAgent):
             top_cluster=top,
             second_cluster=second,
         )
-
+        '''
         if not summary_allows:
             logger.info(
                 "[ClusterRouter] Summary gate blocked routing → clarification required"
             )
             return self._ambiguous(message, confidence=top["score"], candidate_clusters=clusters[:2])
+        '''
+
+        if not summary_allows:
+            logger.info(
+                "[ClusterRouter] Summary gate blocked routing → writing clarification context"
+            )
+
+            set_clarification_context(
+                session_id=message.session_id,
+                user_id=message.user_id,
+                reason="summary_ambiguity",
+                candidate_clusters=clusters[:2],
+            )
+
+            return self._ambiguous(
+                message,
+                confidence=top["score"],
+                candidate_clusters=clusters[:2],
+            )
+
 
         # ✅ Confident Level-1 routing
         return ClusterRoutedQueryMessage(

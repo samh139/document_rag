@@ -39,6 +39,7 @@ torch
 
 # Development
 pytest
+pytest-asyncio
 
 ##UI
 streamlit

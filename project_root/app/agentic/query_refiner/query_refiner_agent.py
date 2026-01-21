@@ -9,8 +9,8 @@ from autogen_core import (
 )
 
 from app.agentic.topics import AgenticTopic
-from app.agentic.messages import EngagementOutputMessage, RefinedQueryMessage
-from app.memory_team.stm.store import get_stm_summary
+from app.agentic.messages import EngagementOutputMessage, RefinedQueryMessage, ClarificationReplyMessage
+from app.memory_team.stm.store import get_stm_summary , get_clarification_context, clear_clarification_context
 from app.memory_team.ltm.ltm_service import retrieve_ltm_context
 from app.configs.llm_config import fire_fast_modal_request_chat
 
@@ -64,72 +64,109 @@ OUTPUT RULES (CRITICAL):
 - No bullet points
 - No metadata
 
+CRITICAL SAFETY RULE:
+- Remove or generalize sensitive identifiers such as:
+  account numbers, card numbers, customer IDs, phone numbers
+- Replace them with generic terms (e.g., "the account")
+
 If the current query is already explicit and complete, return it unchanged.
 
 
 """
 
+# ------------------------------------------------------------------
+# SYSTEM PROMPT (B3 – strict disambiguation)
+# ------------------------------------------------------------------
+CLARIFICATION_PROMPT = """
+You are resolving a clarification reply.
+
+Original ambiguous question:
+{original_query}
+
+Possible interpretations:
+{candidate_summaries}
+
+User clarification reply:
+{reply}
+
+Task:
+- Resolve the user's intended meaning
+- Produce ONE explicit, retrieval-ready query
+- Do NOT ask questions
+- Do NOT explain
+"""
+
+# ------------------------------------------------------------------
 @type_subscription(topic_type=AgenticTopic.ENGAGEMENT_OUTPUT.value)
+@type_subscription(topic_type=AgenticTopic.CLARIFICATION_REPLY_MESSAGE.value)
 class QueryRefinerAgent(RoutedAgent):
 
     def __init__(self):
         super().__init__("QueryRefinerAgent")
 
+    # --------------------------------------------------------------
     @message_handler
-    async def handle_user_query(
-        self,
-        message: EngagementOutputMessage,
-        ctx: MessageContext,
-    ) -> None:
+    async def handle_message(self, message, ctx: MessageContext) -> None:
 
-        logger.info(f"[QueryRefiner] Refining query for session={message.session_id}")
-        print(f"User Query recieved : {message.user_query}")
+        # 🔥 CASE A: Clarification reply (B3)
+        if isinstance(message, ClarificationReplyMessage):
+            clarification = ClarificationReplyMessage(
+                session_id=message.session_id,
+                user_id=message.user_id,
+            )
 
-        # Retrieve STM summary
-        stm_summary = get_stm_summary(
-            session_id=message.session_id,
-            user_id=message.user_id
-        )
-        print(f"STM Summary from QueryRefinerAgent: {stm_summary}")
-        # Retrieve LTM context
-        ltm_results = retrieve_ltm_context(
-            query=message.user_query,
-            user_id=message.user_id,
-            session_id=message.session_id,
-            top_n=3
-        )
-        print(f"LTM Results from QueryRefinerAgent: {ltm_results}")
+            if not clarification:
+                logger.warning("Clarification reply without context — ignoring")
+                return
 
-        user_prompt = f"""
-        Current User Query:
-        {message.user_query}
+            candidate_summaries = [
+                f"- {c['summary']}"
+                for c in clarification["candidate_clusters"]
+            ]
 
-        Short-Term Memory Summary:
-        {stm_summary.get("conversation_summary") or "None"}
+            prompt = CLARIFICATION_PROMPT.format(
+                original_query=clarification["original_query"],
+                candidate_summaries="\n".join(candidate_summaries),
+                reply=message.content,
+            )
 
-        Conversation Entities:
-        {stm_summary.get("conversation_entities") or "None"}
+            refined_query = fire_fast_modal_request_chat(
+                system_prompt="",
+                user_prompt=prompt,
+            ).strip()
 
-        Relevant Long-Term Memory:
-        {[{"user": r["user_message"], "bot": r["bot_response"]} for r in ltm_results]}
+            clear_clarification_context(
+                session_id=message.session_id,
+                user_id=message.user_id,
+            )
 
-        Refined Retrieval Query:
-        """
+            output = RefinedQueryMessage(
+                refined_query=refined_query,
+                original_query=clarification["original_query"],
+                intent="BANK_QUERY",
+                session_id=message.session_id,
+                user_id=message.user_id,
+            )
 
-        refined_query = fire_fast_modal_request_chat(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt
-        ).strip()
+        # 🔹 CASE B: Normal engagement flow
+        else:
+            stm_summary = get_stm_summary(
+                session_id=message.session_id,
+                user_id=message.user_id,
+            )
 
-        print(f"Refined Query from QueryRefinerAgent: {refined_query}")
+            refined_query = fire_fast_modal_request_chat(
+                system_prompt=system_prompt,
+                user_prompt=f"User query:\n{message.user_query}",
+            ).strip()
 
-        output = RefinedQueryMessage(
-            refined_query=refined_query,
-            original_query=message.user_query,
-            intent=message.intent,
-            user_id=message.user_id,
-            session_id=message.session_id,
-        )
+            output = RefinedQueryMessage(
+                refined_query=refined_query,
+                original_query=message.user_query,
+                intent=message.intent,
+                session_id=message.session_id,
+                user_id=message.user_id,
+            )
 
         await self.publish_message(
             output,
@@ -138,8 +175,3 @@ class QueryRefinerAgent(RoutedAgent):
                 source=self.id.key,
             ),
         )
-
-        logger.info(f"[QueryRefiner] Refined query published")
-
-
-

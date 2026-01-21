@@ -17,6 +17,11 @@ from app.agentic.messages import (
     ClarificationQuestionMessage,
 )
 
+from app.memory_team.stm.store import (
+    get_clarification_context,
+    set_clarification_context,
+)
+
 logger = logging.getLogger("ClarificationAgent")
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -37,13 +42,26 @@ class ClarificationAgent(RoutedAgent):
         ctx: MessageContext,
     ) -> None:
 
-        # Only handle ambiguous cases
+        # ✅ Only handle ambiguous cases
         if message.restrict_cluster_ids is not None:
+            return
+
+        # ✅ Prevent duplicate clarification
+        existing = get_clarification_context(
+            session_id=message.session_id,
+            user_id=message.user_id,
+        )
+        if existing:
+            logger.info(
+                "[Clarification] Clarification already active — skipping"
+            )
             return
 
         clusters = message.candidate_clusters or []
         if len(clusters) < 2:
-            logger.warning("[Clarification] Not enough clusters to clarify")
+            logger.warning(
+                "[Clarification] Not enough candidate clusters to clarify"
+            )
             return
 
         summary_1 = clusters[0].get("summary", "")
@@ -81,7 +99,7 @@ Possible meanings:
 Ask ONE clarification question:
 """.strip()
 
-        logger.debug("[Clarification] Prompt:\n%s", prompt)
+        logger.debug("[Clarification] Prompt sent to LLM:\n%s", prompt)
 
         try:
             resp = requests.post(
@@ -97,9 +115,24 @@ Ask ONE clarification question:
             resp.raise_for_status()
             question = resp.json().get("response", "").strip()
         except Exception:
-            logger.exception("[Clarification] LLM failure")
+            logger.exception("[Clarification] LLM failure — aborting")
+            raise Exception("Clarification LLM request failed")
+
+        if not question:
+            logger.warning("[Clarification] Empty clarification question")
             return
 
+        # 🔐 STORE clarification context in STM
+        set_clarification_context(
+            session_id=message.session_id,
+            user_id=message.user_id,
+            reason="routing_ambiguity",
+            candidate_clusters=clusters[:2],
+        )
+
+        logger.info(
+            "[Clarification] Clarification context stored in STM"
+        )
 
         output = ClarificationQuestionMessage(
             question=question,

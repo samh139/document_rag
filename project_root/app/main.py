@@ -11,6 +11,7 @@ from app.agentic.rag.bank_rag_synthesis_agent import BankRAGSynthesisAgent
 from app.agentic.query_refiner.query_refiner_agent import QueryRefinerAgent
 from app.agentic.cluster_agent.cluster_agent import ClusterRouterAgent
 from app.memory_team.ltm.index_bootstrap import ensure_ltm_index
+from app.agentic.clarification.clarification_agent import ClarificationAgent
 
 app = FastAPI(title="Banking RAG Assistant")
 
@@ -31,6 +32,10 @@ async def startup_event():
 
     await ClusterRouterAgent.register(
         runtime, "cluster_router", ClusterRouterAgent
+    )
+
+    await ClarificationAgent.register(
+        runtime, "clarification_agent", ClarificationAgent
     )
     
     await BankRAGRetrievalAgent.register(

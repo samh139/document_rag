@@ -146,7 +146,7 @@ def build_subclusters_for_root_cluster(
 
         # Fetch representative texts
         sample_texts = fetch_chunk_texts(sub_chunk_ids, limit=6)
-        print(f"Sample texts for subcluster {sub_doc['cluster_id']}: {sample_texts}")
+        #print(f"Sample texts for subcluster {sub_doc['cluster_id']}: {sample_texts}")
 
         if sample_texts:
             try:
