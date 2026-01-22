@@ -54,32 +54,37 @@ class BankRAGSynthesisAgent(RoutedAgent):
         )
 
     def _synthesize(self, question: str, chunks):
-        context = self._build_context(chunks)
+        try:
+            context = self._build_context(chunks)
 
-        prompt = f"""
-{SYSTEM_PROMPT}
+            prompt = f"""
+            {SYSTEM_PROMPT}
 
-Question:
-{question}
+            Question:
+            {question}
 
-Document excerpts:
-{context}
-"""
+            Document excerpts:
+            {context}
+            """
 
-        payload = {
-            "model": SYNTHESIS_MODEL,
-            "prompt": prompt,
-            "stream": False,
-        }
+            payload = {
+                "model": SYNTHESIS_MODEL,
+                "prompt": prompt,
+                "stream": False,
+            }
 
-        resp = requests.post(
-            f"{OLLAMA_URL}/api/generate",
-            json=payload,
-            timeout=90,
-        )
-        resp.raise_for_status()
+            resp = requests.post(
+                f"{OLLAMA_URL}/api/generate",
+                json=payload,
+                timeout=90,
+            )
+            resp.raise_for_status()
 
-        return resp.json().get("response", "").strip()
+            return resp.json().get("response", "").strip()
+        
+        except Exception as e:
+            logger.error(f"[SYNTHESIS ERROR] {e}")
+            return "I could not generate an answer due to an internal error."
 
     @message_handler
     async def handle_retrieval_result(

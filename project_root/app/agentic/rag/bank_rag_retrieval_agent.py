@@ -40,17 +40,37 @@ class BankRAGRetrievalAgent(RoutedAgent):
         if message.intent != "BANK_QUERY":
             return
 
-        # 🚦 CASE B — ambiguous → clarification later
         if message.restrict_cluster_ids is None:
-            logger.info("[RAG] No cluster restriction → clarification needed")
-            return  # ClarificationAgent will handle this
+            return  
 
         # 🚀 CASE A — resolve clusters → chunks
         restrict_ids = resolve_cluster_ids_to_chunk_ids(
             cluster_ids=message.restrict_cluster_ids,
             expand_level2=True,
         )
+        if not restrict_ids:
+            logger.error(
+                "[RAG] Confident routing but no chunks found "
+                f"cluster_ids={message.restrict_cluster_ids}"
+            )
 
+            output = RAGRetrievalResultMessage(
+                query=message.refined_query,
+                chunks=[],  # explicitly empty
+                session_id=message.session_id,
+                user_id=message.user_id,
+                error="NO_CHUNKS_FOR_CONFIDENT_CLUSTER"
+            )
+
+            await self.publish_message(
+                output,
+                topic_id=TopicId(
+                    AgenticTopic.RAG_RETRIEVAL_OUTPUT.value,
+                    source=self.id.key,
+                ),
+            )
+            return
+            
         retrieval = RetrieverAgent.retrieve(
             query=message.refined_query,
             user_acl=[],

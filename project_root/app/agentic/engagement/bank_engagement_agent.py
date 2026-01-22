@@ -82,7 +82,7 @@ class BankEngagementAgent(RoutedAgent):
             user_id=message.user_id,
         )
 
-        if clarification:
+        if clarification and clarification.get("active", False):
             logger.info("[Engagement] Clarification reply detected")
 
             reply = ClarificationReplyMessage(
@@ -94,7 +94,7 @@ class BankEngagementAgent(RoutedAgent):
             await self.publish_message(
                 reply,
                 topic_id=TopicId(
-                    AgenticTopic.CLARIFICATION_REPLY.value,
+                    AgenticTopic.CLARIFICATION_REPLY_MESSAGE.value,
                     source=self.id.key,
                 ),
             )

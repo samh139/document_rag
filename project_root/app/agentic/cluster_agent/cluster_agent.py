@@ -116,48 +116,7 @@ class ClusterRouterAgent(RoutedAgent):
             })
 
         return results
-    '''
-    def _search_level1_clusters(self, query_vector: List[float]) -> List[dict]:
-        body = {
-            "size": TOP_K,
-            "query": {
-                "bool": {
-                    "filter": [
-                        {"term": {"level": 1}}
-                    ],
-                    "must": [
-                        {
-                            "knn": {
-                                "field": "vector",
-                                "query_vector": query_vector,
-                                "k": TOP_K,
-                                "num_candidates": 20,
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-
-        res = self.es.search(
-            index="clusters_v2",
-            body=body,
-        )
-
-        hits = res.get("hits", {}).get("hits", [])
-        results = []
-
-        for h in hits:
-            src = h["_source"]
-            results.append({
-                "cluster_id": src["cluster_id"],
-                "score": float(h["_score"]),
-                "chunk_count": src.get("meta_stats", {}).get("chunk_count", 0),
-                "summary": src.get("summary", ""),
-            })
-
-        return results
-    '''
+    
 
     # -----------------------------
     def _decide_routing(
@@ -188,21 +147,10 @@ class ClusterRouterAgent(RoutedAgent):
                 or score_gap >= MIN_SCORE_GAP
             )
         )
-        '''
-        if not confident_ann:
-            return self._ambiguous(message, confidence=top["score"], candidate_clusters=clusters[:2])
-        '''
 
         if not confident_ann:
             logger.info(
                 "[ClusterRouter] ANN not confident → writing clarification context"
-            )
-
-            set_clarification_context(
-                session_id=message.session_id,
-                user_id=message.user_id,
-                reason="ann_confidence_low",
-                candidate_clusters=clusters[:2],
             )
 
             return self._ambiguous(
@@ -218,24 +166,11 @@ class ClusterRouterAgent(RoutedAgent):
             top_cluster=top,
             second_cluster=second,
         )
-        '''
-        if not summary_allows:
-            logger.info(
-                "[ClusterRouter] Summary gate blocked routing → clarification required"
-            )
-            return self._ambiguous(message, confidence=top["score"], candidate_clusters=clusters[:2])
-        '''
+        
 
         if not summary_allows:
             logger.info(
                 "[ClusterRouter] Summary gate blocked routing → writing clarification context"
-            )
-
-            set_clarification_context(
-                session_id=message.session_id,
-                user_id=message.user_id,
-                reason="summary_ambiguity",
-                candidate_clusters=clusters[:2],
             )
 
             return self._ambiguous(

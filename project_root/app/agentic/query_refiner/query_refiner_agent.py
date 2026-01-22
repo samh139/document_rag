@@ -108,20 +108,23 @@ class QueryRefinerAgent(RoutedAgent):
     @message_handler
     async def handle_message(self, message, ctx: MessageContext) -> None:
 
-        # 🔥 CASE A: Clarification reply (B3)
         if isinstance(message, ClarificationReplyMessage):
-            clarification = ClarificationReplyMessage(
+            clarification = get_clarification_context(
                 session_id=message.session_id,
                 user_id=message.user_id,
             )
 
-            if not clarification:
-                logger.warning("Clarification reply without context — ignoring")
+            if not clarification or not clarification.get("active", False):
+                logger.warning("Clarification reply without active context — ignoring")
+                return
+
+            if not clarification.get("candidate_clusters"):
+                logger.warning("Clarification context missing candidate_clusters — ignoring")
+                clear_clarification_context(message.session_id, message.user_id)
                 return
 
             candidate_summaries = [
-                f"- {c['summary']}"
-                for c in clarification["candidate_clusters"]
+                f"- {c['summary']}" for c in clarification["candidate_clusters"]
             ]
 
             prompt = CLARIFICATION_PROMPT.format(
@@ -148,25 +151,60 @@ class QueryRefinerAgent(RoutedAgent):
                 user_id=message.user_id,
             )
 
-        # 🔹 CASE B: Normal engagement flow
-        else:
-            stm_summary = get_stm_summary(
-                session_id=message.session_id,
-                user_id=message.user_id,
+            await self.publish_message(
+                output,
+                topic_id=TopicId(
+                    AgenticTopic.REFINED_QUERY_TOPIC.value,
+                    source=self.id.key,
+                ),
             )
+            return
 
-            refined_query = fire_fast_modal_request_chat(
-                system_prompt=system_prompt,
-                user_prompt=f"User query:\n{message.user_query}",
-            ).strip()
+        # 🔹 Normal engagement flow
+        # Retrieve STM summary
+        stm_summary = get_stm_summary(
+            session_id=message.session_id,
+            user_id=message.user_id
+        )
+        print(f"STM Summary from QueryRefinerAgent: {stm_summary}")
 
-            output = RefinedQueryMessage(
-                refined_query=refined_query,
-                original_query=message.user_query,
-                intent=message.intent,
-                session_id=message.session_id,
-                user_id=message.user_id,
-            )
+        # Retrieve LTM context
+        ltm_results = retrieve_ltm_context(
+            query=message.user_query,
+            user_id=message.user_id,
+            session_id=message.session_id,
+            top_n=3
+        )
+        print(f"LTM Results from QueryRefinerAgent: {ltm_results}")
+
+        user_prompt = f"""
+        Current User Query:
+        {message.user_query}
+
+        Short-Term Memory Summary:
+        {stm_summary.get("conversation_summary") or "None"}
+
+        Conversation Entities:
+        {stm_summary.get("conversation_entities") or "None"}
+
+        Relevant Long-Term Memory:
+        {[{"user": r["user_message"], "bot": r["bot_response"]} for r in ltm_results]}
+
+        Refined Retrieval Query:
+        """
+
+        refined_query = fire_fast_modal_request_chat(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        ).strip()
+
+        output = RefinedQueryMessage(
+            refined_query=refined_query,
+            original_query=message.user_query,
+            intent=message.intent,
+            session_id=message.session_id,
+            user_id=message.user_id,
+        )
 
         await self.publish_message(
             output,
@@ -175,3 +213,4 @@ class QueryRefinerAgent(RoutedAgent):
                 source=self.id.key,
             ),
         )
+        logger.info("[QueryRefiner] Published RefinedQueryMessage")
