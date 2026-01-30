@@ -13,6 +13,7 @@ from app.agentic.messages import EngagementOutputMessage, RefinedQueryMessage, C
 from app.memory_team.stm.store import get_stm_summary , get_clarification_context, clear_clarification_context
 from app.memory_team.ltm.ltm_service import retrieve_ltm_context
 from app.configs.llm_config import fire_fast_modal_request_chat
+from typing import Union
 
 import logging
 
@@ -106,7 +107,7 @@ class QueryRefinerAgent(RoutedAgent):
 
     # --------------------------------------------------------------
     @message_handler
-    async def handle_message(self, message, ctx: MessageContext) -> None:
+    async def handle_message(self, message :Union[EngagementOutputMessage, ClarificationReplyMessage], ctx: MessageContext) -> None:
 
         if isinstance(message, ClarificationReplyMessage):
             clarification = get_clarification_context(

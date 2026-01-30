@@ -118,12 +118,11 @@ class ClusterRouterAgent(RoutedAgent):
         return results
     
 
-    # -----------------------------
     def _decide_routing(
-        self,
-        message: RefinedQueryMessage,
-        clusters: List[dict],
-    ) -> ClusterRoutedQueryMessage:
+    self,
+    message: RefinedQueryMessage,
+    clusters: List[dict],
+) -> ClusterRoutedQueryMessage:
 
         # ❌ No clusters → ambiguous
         if not clusters:
@@ -137,13 +136,11 @@ class ClusterRouterAgent(RoutedAgent):
             if second else None
         )
 
-        has_competition = score_gap is not None
-
         confident_ann = (
             top["score"] >= MIN_TOP_SCORE
             and top["chunk_count"] <= MAX_CLUSTER_CHUNKS
             and (
-                not has_competition
+                score_gap is None
                 or score_gap >= MIN_SCORE_GAP
             )
         )
@@ -152,33 +149,28 @@ class ClusterRouterAgent(RoutedAgent):
             logger.info(
                 "[ClusterRouter] ANN not confident → writing clarification context"
             )
-
             return self._ambiguous(
                 message,
                 confidence=top["score"],
                 candidate_clusters=clusters[:2],
             )
 
-        
-        # 🔒 NEW: Summary-aware routing gate
+        # 🔒 Summary-aware routing gate (CORRECT, KEEP THIS)
         summary_allows = self._summary_allows_routing(
             query=message.refined_query,
             top_cluster=top,
             second_cluster=second,
         )
-        
 
         if not summary_allows:
             logger.info(
                 "[ClusterRouter] Summary gate blocked routing → writing clarification context"
             )
-
             return self._ambiguous(
                 message,
                 confidence=top["score"],
                 candidate_clusters=clusters[:2],
             )
-
 
         # ✅ Confident Level-1 routing
         return ClusterRoutedQueryMessage(
@@ -188,7 +180,7 @@ class ClusterRouterAgent(RoutedAgent):
             restrict_cluster_ids=[top["cluster_id"]],
             routing_confidence=top["score"],
             routing_level=1,
-            candidate_clusters=None,  # not needed anymore
+            candidate_clusters=None,
             session_id=message.session_id,
             user_id=message.user_id,
         )
@@ -253,7 +245,6 @@ class ClusterRouterAgent(RoutedAgent):
     - The question is broad or underspecified
     - Multiple interpretations are possible
     - The SECOND cluster summary could also reasonably answer the question
-    - The TOP cluster summary is generic or high-level
     - A clarification question would improve answer accuracy
 
     You are NOT allowed to:

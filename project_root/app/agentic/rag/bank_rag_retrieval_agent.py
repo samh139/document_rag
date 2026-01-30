@@ -46,7 +46,6 @@ class BankRAGRetrievalAgent(RoutedAgent):
         # 🚀 CASE A — resolve clusters → chunks
         restrict_ids = resolve_cluster_ids_to_chunk_ids(
             cluster_ids=message.restrict_cluster_ids,
-            expand_level2=True,
         )
         if not restrict_ids:
             logger.error(
