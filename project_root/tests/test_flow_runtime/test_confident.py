@@ -9,11 +9,15 @@ from app.agentic.runtime_instance import runtime
 from app.agentic.state import response_queue
 from app.agentic.topics import AgenticTopic
 from app.agentic.messages import BankUserMessage, FinalAnswerMessage
+from app.memory_team.ltm.index_bootstrap import ensure_ltm_index
 
 from tests.helpers.runtime_bootstrap import start_test_runtime
 
 @pytest.mark.asyncio
 async def test_confident_flow():
+    """Tests the confident routing flow end-to-end."""
+
+    ensure_ltm_index()  # ✅ LTM index exists
     await start_test_runtime()  # ✅ agents + runtime started
 
     session_id = f"test-sess-{uuid.uuid4().hex[:8]}"

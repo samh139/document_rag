@@ -6,13 +6,19 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 SUMMARY_MODEL = os.getenv("SUMMARY_MODEL", "gemma3:12b")
 
 SYSTEM_PROMPT = """
-You are generating short semantic labels for document clusters.
+You are generating business capability summaries for a banking knowledge system.
+
+Your goal is to describe what customer questions this cluster can fully answer.
 
 Rules:
 - Output ONE short summary (1-2 sentences)
-- Describe what kind of user questions this cluster answers
+- Explicitly mention in summary banking services products fees charges limits or rules if present
+- Use generic capability language not specific dates amounts or examples
+- The summary should help decide whether this cluster alone can answer a question
+- Do NOT mention documents chunks embeddings or clustering
+- Do NOT use bullet points
 - Do NOT use punctuation
-- Do NOT mention documents or chunks
+
 """
 
 def summarize_cluster(chunk_texts: List[str]) -> str:
