@@ -12,7 +12,7 @@ from app.agentic.query_refiner.query_refiner_agent import QueryRefinerAgent
 from app.agentic.cluster_agent.cluster_agent import ClusterRouterAgent
 from app.memory_team.ltm.index_bootstrap import ensure_ltm_index
 from app.agentic.clarification.clarification_agent import ClarificationAgent
-from app.agentic.ui_bridge.ui_bridge_agent import UIBridgeAgent
+#from app.agentic.ui_bridge.ui_bridge_agent import UIBridgeAgent
 
 app = FastAPI(title="Banking RAG Assistant")
 
@@ -45,10 +45,6 @@ async def startup_event():
 
     await BankRAGSynthesisAgent.register(
         runtime, "bank_rag_synthesis", BankRAGSynthesisAgent
-    )
-
-    await UIBridgeAgent.register(
-        runtime, "ui_bridge_agent", UIBridgeAgent
     )
 
     await FinalAnswerCollector.register(

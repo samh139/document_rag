@@ -154,7 +154,7 @@ class ClusterRouterAgent(RoutedAgent):
                 confidence=top["score"],
                 candidate_clusters=clusters[:2],
             )
-
+        '''
         # 🔒 Summary-aware routing gate (CORRECT, KEEP THIS)
         summary_allows = self._summary_allows_routing(
             query=message.refined_query,
@@ -171,7 +171,7 @@ class ClusterRouterAgent(RoutedAgent):
                 confidence=top["score"],
                 candidate_clusters=clusters[:2],
             )
-
+        '''
         # ✅ Confident Level-1 routing
         return ClusterRoutedQueryMessage(
             original_query=message.original_query,

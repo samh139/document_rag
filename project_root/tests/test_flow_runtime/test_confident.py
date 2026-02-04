@@ -12,6 +12,13 @@ from app.agentic.messages import BankUserMessage, FinalAnswerMessage
 from app.memory_team.ltm.index_bootstrap import ensure_ltm_index
 
 from tests.helpers.runtime_bootstrap import start_test_runtime
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+
 
 @pytest.mark.asyncio
 async def test_confident_flow():

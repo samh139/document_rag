@@ -16,6 +16,8 @@ from app.agentic.messages import (
     FinalAnswerMessage,
 )
 
+from typing import List, Dict
+
 # ------------------------------------------------------------------
 # Logging
 # ------------------------------------------------------------------
@@ -31,14 +33,23 @@ SYNTHESIS_MODEL = os.getenv("SYNTHESIS_MODEL", "gemma3:12b")
 SYSTEM_PROMPT = """
 You are a banking assistant.
 
-Answer the user's question using ONLY the provided document excerpts.
-If the answer is not found in the excerpts, say:
-"I could not find this information in the provided documents."
+Answer the user's question using ONLY the information
+provided in the CONTEXT below.
+
+You ARE allowed to:
+- Extract charges, fees, limits, and rules from the context
+- Rephrase and summarize information
+- Combine information across multiple context chunks
+- Answer even if the wording does not exactly match the question
 
 Rules:
+- Do NOT use external knowledge
+- Do NOT invent values not present in the context
+- If the context contains relevant information, you MUST answer using it
+- Only say "I don’t have this information in the available bank documents"
+  if the context has NO information related to the question at all
 - Be concise and factual
-- Do not hallucinate
-- Do not use external knowledge
+- Clearly list charges when applicable
 """
 
 @type_subscription(topic_type=AgenticTopic.RAG_RETRIEVAL_OUTPUT.value)
@@ -47,44 +58,90 @@ class BankRAGSynthesisAgent(RoutedAgent):
     def __init__(self) -> None:
         super().__init__("BankRAGSynthesisAgent")
 
-    def _build_context(self, chunks):
-        return "\n\n".join(
-            f"[{i+1}] {c['content']}"
-            for i, c in enumerate(chunks)
-        )
+    def _build_context(self, chunks: List[Dict], max_chars: int = 6000) -> str:
+        """
+        Build a context string from retrieved chunks.
+        Truncates safely to avoid prompt overflow.
+        """
+        logger.warning("🔥 _build_context CALLED 🔥")
 
-    def _synthesize(self, question: str, chunks):
-        try:
-            context = self._build_context(chunks)
+        context_parts = []
+        total_chars = 0
 
-            prompt = f"""
-            {SYSTEM_PROMPT}
+        logger.info(f"Building context from {len(chunks)} chunks")
 
-            Question:
-            {question}
+        for i, c in enumerate(chunks, start=1):
+            text = c.get("content", "").strip()
 
-            Document excerpts:
-            {context}
-            """
+            header = (
+                f"\n[Chunk {i} | Source: {c.get('metadata', {}).get('file_name', '')}]"
+                f"\n(Relevance: May contain information related to the user question)"
+            )
 
-            payload = {
-                "model": SYNTHESIS_MODEL,
-                "prompt": prompt,
-                "stream": False,
+            block = f"{header}\n{text}\n"
+
+            logger.info(f"[DEBUG] Chunk {i} preview: {text[:200]}")
+            logger.info(f"[DEBUG] Block length: {len(block)}")
+            logger.info(f"[DEBUG] Total chars so far: {total_chars}")
+
+            if total_chars + len(block) > max_chars:
+                logger.info("[DEBUG] Max context size reached, stopping")
+                break
+
+            context_parts.append(block)
+            total_chars += len(block)
+
+        logger.info(f"Final context size: {total_chars} chars")
+        return "\n".join(context_parts)
+
+    def synthesize_answer(self, query: str, chunks: List[Dict]) -> str:
+        """
+        Main entry point to generate the final answer.
+        """
+        logger.warning(f"🔥 synthesize_answer CALLED with {len(chunks)} chunks")
+
+        if not chunks:
+            logger.warning("No chunks provided to synthesizer")
+            return "I don’t have this information in the available bank documents."
+
+        context = self._build_context(chunks)
+
+        prompt = f"""
+    {SYSTEM_PROMPT}
+
+    CONTEXT:
+    {context}
+
+    USER QUESTION:
+    {query}
+
+    ANSWER:
+"""
+
+        body = {
+            "model": SYNTHESIS_MODEL,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.2,
+                "top_p": 0.9
             }
+        }
 
+        try:
             resp = requests.post(
                 f"{OLLAMA_URL}/api/generate",
-                json=payload,
-                timeout=90,
+                json=body,
+                timeout=120
             )
             resp.raise_for_status()
+            out = resp.json()
+            return out.get("response", "").strip()
 
-            return resp.json().get("response", "").strip()
-        
         except Exception as e:
-            logger.error(f"[SYNTHESIS ERROR] {e}")
-            return "I could not generate an answer due to an internal error."
+            logger.exception("LLM generation failed")
+            return f"Error generating answer: {str(e)}"
+
 
     @message_handler
     async def handle_retrieval_result(
@@ -96,9 +153,9 @@ class BankRAGSynthesisAgent(RoutedAgent):
         logger.info(
             f"[SYNTHESIS] Generating answer for session={message.session_id}"
         )
-        print(f"Question: {message.query}")
-        answer = self._synthesize(
-            question=message.query,
+
+        answer = self.synthesize_answer(
+            query=message.query,
             chunks=message.chunks,
         )
 
