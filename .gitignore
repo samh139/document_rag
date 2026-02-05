@@ -7,3 +7,5 @@ __pycache__/
 .DS_Store
 .env
 app/config/secrets.env
+*.zip
+old_data/
