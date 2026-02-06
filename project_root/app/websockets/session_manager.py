@@ -11,13 +11,13 @@ class SessionManager:
         self,
         session_id: str,
         user_id: str,
-        websocket: WebSocket
+        websocket: WebSocket,
     ) -> ConversationSession:
         if session_id not in self._sessions:
             self._sessions[session_id] = ConversationSession(
                 session_id=session_id,
                 user_id=user_id,
-                websocket=websocket
+                websocket=websocket,
             )
         return self._sessions[session_id]
 

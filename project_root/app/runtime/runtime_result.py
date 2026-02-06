@@ -1,14 +1,12 @@
 #!project_root/app/runtime/runtime_result.py
 from typing import Literal, Optional, Any
 
-
 RuntimeStatus = Literal[
     "CONTINUE",
     "WAIT",
     "COMPLETE",
     "ERROR"
 ]
-
 
 class RuntimeResult:
     def __init__(

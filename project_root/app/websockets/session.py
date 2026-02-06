@@ -1,9 +1,10 @@
-#!project_root/app/websockets/session.py
-
 from datetime import datetime
 from fastapi import WebSocket
 from typing_extensions import Literal
 from typing import Optional, Any
+
+from app.runtime.runtime_result import RuntimeResult
+from app.runtime.event_sink import RuntimeEventSink
 
 
 SessionStatus = Literal[
@@ -11,27 +12,23 @@ SessionStatus = Literal[
     "ACTIVE",
     "WAITING_FOR_USER",
     "COMPLETED",
-    "ERROR"
+    "ERROR",
 ]
 
 
-class ConversationSession:
+class ConversationSession(RuntimeEventSink):
     def __init__(
         self,
         session_id: str,
         user_id: str,
-        websocket: WebSocket
+        websocket: WebSocket,
     ):
         self.session_id = session_id
         self.user_id = user_id
         self.websocket = websocket
 
         self.status: SessionStatus = "NEW"
-
-        # Runtime is opaque to WS layer
         self.runtime = None
-
-        # Used ONLY when paused
         self.paused_payload: Optional[dict[str, Any]] = None
 
         self.created_at = datetime.utcnow()
@@ -49,3 +46,33 @@ class ConversationSession:
     def mark_completed(self):
         self.status = "COMPLETED"
         self.last_active_at = datetime.utcnow()
+
+    async def handle_runtime_result(
+        self,
+        result: RuntimeResult
+    ):
+        """
+        This replaces response_queue.
+        """
+        if result.status == "WAIT":
+            self.mark_waiting(result.payload)
+            await self.websocket.send_json({
+                "type": "CLARIFICATION_QUESTION",
+                "payload": result.payload
+            })
+
+        elif result.status == "COMPLETE":
+            self.mark_completed()
+            await self.websocket.send_json({
+                "type": "FINAL_ANSWER",
+                "payload": result.payload
+            })
+
+        elif result.status == "ERROR":
+            self.status = "ERROR"
+            await self.websocket.send_json({
+                "type": "ERROR",
+                "payload": {
+                    "reason": result.reason
+                }
+            })

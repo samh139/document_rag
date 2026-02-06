@@ -1,15 +1,9 @@
-#!project_root/app/websockets/router.py
-
 from fastapi import APIRouter, WebSocket
 from app.websockets.protocol import WSMessage
 from app.websockets.session_manager import SessionManager
 from app.websockets.handlers import (
     handle_user_message,
-    handle_clarification_reply
-)
-from app.agentic.messages import (
-    BankUserMessage,
-    ClarificationReplyMessage
+    handle_clarification_reply,
 )
 
 router = APIRouter()
@@ -26,18 +20,16 @@ async def chat_ws(websocket: WebSocket):
             msg = WSMessage(**raw)
 
             if msg.type == "BANK_USER_MESSAGE":
-                user_msg = BankUserMessage(**msg.payload)
                 session = session_manager.get_or_create(
-                    user_msg.session_id,
-                    user_msg.user_id,
-                    websocket
+                    session_id=msg.payload["session_id"],
+                    user_id=msg.payload["user_id"],
+                    websocket=websocket,
                 )
-                await handle_user_message(session, user_msg)
+                await handle_user_message(session, msg.payload)
 
             elif msg.type == "CLARIFICATION_REPLY":
-                reply = ClarificationReplyMessage(**msg.payload)
-                session = session_manager.get(reply.session_id)
-                await handle_clarification_reply(session, reply)
+                session = session_manager.get(msg.payload["session_id"])
+                await handle_clarification_reply(session, msg.payload)
 
     except Exception:
         await websocket.close()
