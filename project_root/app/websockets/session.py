@@ -5,6 +5,8 @@ from typing import Optional, Any
 
 from app.runtime.runtime_result import RuntimeResult
 from app.runtime.event_sink import RuntimeEventSink
+from app.runtime.runtime_context import RuntimeContext
+
 
 
 SessionStatus = Literal[
@@ -28,7 +30,7 @@ class ConversationSession(RuntimeEventSink):
         self.websocket = websocket
 
         self.status: SessionStatus = "NEW"
-        self.runtime = None
+        self.runtime = Optional[RuntimeContext] = None
         self.paused_payload: Optional[dict[str, Any]] = None
 
         self.created_at = datetime.utcnow()

@@ -1,34 +1,29 @@
+from app.websockets.session_event_sink import SessionEventSink
+from app.runtime.runtime_context import RuntimeContext
+from app.agentic.messages import (
+    BankUserMessage,
+    ClarificationReplyMessage,
+)
 from app.websockets.session import ConversationSession
-from app.runtime.runtime_factory import create_runtime
 
 
 async def handle_user_message(
     session: ConversationSession,
-    payload: dict,
+    msg: BankUserMessage,
 ):
-    session.mark_active()
-
+    # create runtime only once per session
     if session.runtime is None:
-        session.runtime = create_runtime(session)
+        sink = SessionEventSink(session)
+        session.runtime = RuntimeContext(session, sink)
 
-    # Step-3 will publish message into runtime
-    print(
-        f"[SESSION {session.session_id}] "
-        f"User message: {payload['content']}"
-    )
+    await session.runtime.start(msg)
 
 
 async def handle_clarification_reply(
     session: ConversationSession,
-    payload: dict,
+    msg: ClarificationReplyMessage,
 ):
     if session.status != "WAITING_FOR_USER":
-        raise RuntimeError("Unexpected clarification reply")
+        raise RuntimeError("Session not waiting for clarification")
 
-    session.mark_active()
-
-    # Step-3 will inject reply into runtime
-    print(
-        f"[SESSION {session.session_id}] "
-        f"Clarification reply: {payload['content']}"
-    )
+    await session.runtime.resume(msg)
