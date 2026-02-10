@@ -94,7 +94,7 @@ class BankEngagementAgent(RoutedAgent):
             await self.publish_message(
                 reply,
                 topic_id=TopicId(
-                    AgenticTopic.CLARIFICATION_REPLY_MESSAGE.value,
+                    AgenticTopic.CLARIFICATION_REPLY.value,
                     source=self.id.key,
                 ),
             )

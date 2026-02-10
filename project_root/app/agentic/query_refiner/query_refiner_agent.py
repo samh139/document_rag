@@ -99,7 +99,7 @@ Task:
 
 # ------------------------------------------------------------------
 @type_subscription(topic_type=AgenticTopic.ENGAGEMENT_OUTPUT.value)
-@type_subscription(topic_type=AgenticTopic.CLARIFICATION_REPLY_MESSAGE.value)
+@type_subscription(topic_type=AgenticTopic.CLARIFICATION_REPLY.value)
 class QueryRefinerAgent(RoutedAgent):
 
     def __init__(self):

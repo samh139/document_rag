@@ -90,23 +90,38 @@ def dedupe_chunks(chunks):
 
 
 
-def hybrid_retrieve(query_embedding, text_query=None, top_k=10, acl_filter=None):
+def hybrid_retrieve(
+    query_embedding,
+    text_query=None,
+    top_k=10,
+    acl_filter=None,
+    restrict_ids=None,  # now means chunk_ids
+):
     bm = bm25_search(text_query, k=top_k * 2) if text_query else []
     knn = knn_search(query_embedding, k=top_k * 2)
 
     fused = reciprocal_rank_fusion([bm, knn], k=top_k * 3)
-    print(fused)
 
     # 🔥 dedupe AFTER fusion
     fused = dedupe_chunks(fused)
 
+    # 🔒 ACL filter
     if acl_filter:
         fused = [
             d for d in fused
             if any(a in d["source"].get("acl", []) for a in acl_filter)
         ]
 
+    # 🔒 CLUSTER FILTER (POST-FUSION, SAFE)
+    if restrict_ids:
+        allowed = set(restrict_ids)
+        fused = [
+            d for d in fused
+            if d["chunk_id"] in allowed
+        ]
+
     return fused[:top_k]
+
 
 
 

@@ -18,7 +18,7 @@ SessionStatus = Literal[
 ]
 
 
-class ConversationSession(RuntimeEventSink):
+class ConversationSession:
     def __init__(
         self,
         session_id: str,
@@ -48,33 +48,3 @@ class ConversationSession(RuntimeEventSink):
     def mark_completed(self):
         self.status = "COMPLETED"
         self.last_active_at = datetime.utcnow()
-
-    async def handle_runtime_result(
-        self,
-        result: RuntimeResult
-    ):
-        """
-        This replaces response_queue.
-        """
-        if result.status == "WAIT":
-            self.mark_waiting(result.payload)
-            await self.websocket.send_json({
-                "type": "CLARIFICATION_QUESTION",
-                "payload": result.payload
-            })
-
-        elif result.status == "COMPLETE":
-            self.mark_completed()
-            await self.websocket.send_json({
-                "type": "FINAL_ANSWER",
-                "payload": result.payload
-            })
-
-        elif result.status == "ERROR":
-            self.status = "ERROR"
-            await self.websocket.send_json({
-                "type": "ERROR",
-                "payload": {
-                    "reason": result.reason
-                }
-            })

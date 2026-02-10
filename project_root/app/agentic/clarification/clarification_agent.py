@@ -127,6 +127,7 @@ Ask ONE clarification question:
             session_id=message.session_id,
             user_id=message.user_id,
             reason="routing_ambiguity",
+            original_query=message.original_query,
             candidate_clusters=clusters[:2],
         )
 
@@ -143,7 +144,7 @@ Ask ONE clarification question:
         await self.publish_message(
             output,
             topic_id=TopicId(
-                AgenticTopic.CLARIFICATION_QUESTION.value,
+                AgenticTopic.CLARIFICATION_REQUIRED.value,
                 source=self.id.key,
             ),
         )
