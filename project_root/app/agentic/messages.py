@@ -1,20 +1,19 @@
 # app/agentic/messages.py
 
 from dataclasses import dataclass
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, Literal
 from datetime import datetime
 from fastapi import WebSocket
 
-
-
-class BankUserMessage(BaseModel):
+@dataclass
+class BankUserMessage:
     content: str
     session_id :str
     user_id: str
 
-
-class EngagementOutputMessage(BaseModel):
+@dataclass
+class EngagementOutputMessage:
     intent: str
     user_query: str
     response_text: str
