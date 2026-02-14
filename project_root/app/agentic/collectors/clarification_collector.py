@@ -27,6 +27,9 @@ class ClarificationCollector(RoutedAgent):
         message: ClarificationQuestionMessage,
         ctx: MessageContext,
     ) -> None:
+        
+        print("ClarificationCollector received message")
+        
         await self.sink.handle_runtime_result(
             RuntimeResult(
                 status="WAIT",

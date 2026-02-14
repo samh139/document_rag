@@ -1,9 +1,9 @@
 # project_root/app/ingestion/chunkers/splitters.py
 
-'''
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def get_splitters(chunk_size: int = 1500, chunk_overlap: int = 150):
+def get_splitters(chunk_size, chunk_overlap):
     return RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 '''
 
@@ -17,23 +17,26 @@ from langchain_core.documents import Document
 
 
 class OllamaSemanticChunker:
+    """
+    Semantic chunker that uses Ollama embeddings and a single percentile-based split threshold.
+    """
+
     def __init__(
         self,
         model_name: str = "nomic-embed-text",
-        method: str = "percentile",
-        percentile: int = 90,
-        threshold: float = 0.8,
-        std_multiplier: float = 1.0,
+        percentile: int = 85,
         max_chunk_chars: int = 1200,
-        ollama_url: str = "http://localhost:11434/api/embeddings"
+        ollama_url: str = "http://localhost:11434/api/embeddings",
+        request_timeout: int = 30,
+        chunk_overlap: int = 100,  # accepted for compatibility but ignored in this implementation
     ):
         self.model_name = model_name
-        self.method = method
-        self.percentile = percentile
-        self.threshold = threshold
-        self.std_multiplier = std_multiplier
-        self.max_chunk_chars = max_chunk_chars
+        self.percentile = int(percentile)
+        self.max_chunk_chars = int(max_chunk_chars)
+        self.chunk_overlap = int(chunk_overlap)  
         self.ollama_url = ollama_url
+        self.request_timeout = request_timeout
+        self._embed_cache = {}
 
     # ---------- Sentence Split ----------
     def split_sentences(self, text: str) -> List[str]:
@@ -41,26 +44,56 @@ class OllamaSemanticChunker:
         return [s.strip() for s in sentences if s.strip()]
 
     # ---------- Embedding ----------
-    def embed(self, text: str):
-        response = requests.post(
+    def _embed_once(self, text: str):
+        key = text.strip()
+        if not key:
+            return []
+        if key in self._embed_cache:
+            return self._embed_cache[key]
+
+        resp = requests.post(
             self.ollama_url,
-            json={"model": self.model_name, "prompt": text},
+            json={"model": self.model_name, "prompt": key},
+            timeout=self.request_timeout,
         )
-        response.raise_for_status()
-        return response.json()["embedding"]
+        resp.raise_for_status()
+        data = resp.json()
+
+        embedding = None
+        if isinstance(data, dict) and "embedding" in data:
+            embedding = data["embedding"]
+        elif isinstance(data, dict) and "data" in data and isinstance(data["data"], list):
+            embedding = data["data"][0].get("embedding")
+        elif isinstance(data, list) and len(data) and isinstance(data[0], dict) and "embedding" in data[0]:
+            embedding = data[0]["embedding"]
+
+        if embedding is None:
+            raise RuntimeError(f"Unexpected embedding response shape: {data}")
+
+        self._embed_cache[key] = embedding
+        return embedding
 
     def embed_sentences(self, sentences: List[str]):
-        return [self.embed(s) for s in sentences]
+        return [self._embed_once(s) for s in sentences]
 
     # ---------- Cosine Similarity ----------
-    def cosine_sim(self, a, b):
-        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    @staticmethod
+    def cosine_sim(a, b):
+        a = np.array(a, dtype=float)
+        b = np.array(b, dtype=float)
+        denom = (np.linalg.norm(a) * np.linalg.norm(b))
+        if denom == 0:
+            return 0.0
+        return float(np.dot(a, b) / denom)
 
-    # ---------- Core Chunk Logic ----------
+    # ---------- Core Chunk Logic (percentile-only) ----------
     def _chunk_text(self, text: str) -> List[str]:
         sentences = self.split_sentences(text)
 
-        if len(sentences) <= 1:
+        if not sentences:
+            return []
+
+        if len(sentences) == 1:
             return sentences
 
         embeddings = self.embed_sentences(sentences)
@@ -70,20 +103,8 @@ class OllamaSemanticChunker:
             sim = self.cosine_sim(embeddings[i - 1], embeddings[i])
             distances.append(1 - sim)
 
-        # determine threshold
-        if self.method == "percentile":
-            split_threshold = np.percentile(distances, self.percentile)
-
-        elif self.method == "standard_deviation":
-            mean = np.mean(distances)
-            std = np.std(distances)
-            split_threshold = mean + self.std_multiplier * std
-
-        elif self.method == "fixed":
-            split_threshold = 1 - self.threshold
-
-        else:
-            raise ValueError("Invalid method")
+        # Percentile-based threshold only
+        split_threshold = float(np.percentile(distances, self.percentile))
 
         chunks = []
         current_chunk = [sentences[0]]
@@ -91,12 +112,24 @@ class OllamaSemanticChunker:
         for i in range(1, len(sentences)):
             distance = distances[i - 1]
 
-            if distance > split_threshold or \
-               len(" ".join(current_chunk)) > self.max_chunk_chars:
-                chunks.append(" ".join(current_chunk))
-                current_chunk = [sentences[i]]
-            else:
-                current_chunk.append(sentences[i])
+            # split when semantic distance is above the percentile threshold OR chunk length exceeds max chars
+            if distance > split_threshold or len(" ".join(current_chunk)) > self.max_chunk_chars:
+                # finalize previous chunk
+                prev_chunk = current_chunk
+                chunks.append(" ".join(prev_chunk))
+
+                # start next chunk with `chunk_overlap` sentences from the tail of the previous chunk
+                if self.chunk_overlap > 0:
+                    overlap_count = min(self.chunk_overlap, len(prev_chunk))
+                    if overlap_count > 0:
+                        current_chunk = prev_chunk[-overlap_count:].copy()
+                    else:
+                        current_chunk = []
+                else:
+                    current_chunk = []
+
+            # always append the current sentence to the active chunk
+            current_chunk.append(sentences[i])
 
         if current_chunk:
             chunks.append(" ".join(current_chunk))
@@ -106,20 +139,22 @@ class OllamaSemanticChunker:
     # ---------- LangChain Compatible ----------
     def create_documents(self, texts: List[str]) -> List[Document]:
         documents = []
-
         for text in texts:
             chunks = self._chunk_text(text)
             for chunk in chunks:
                 documents.append(Document(page_content=chunk))
-
         return documents
 
 
-# -------- Factory --------
-def get_splitters(chunk_size=1200, overlap=0):
+# -------- Factory (compatible signature) --------
+def get_splitters(chunk_size: int = 1200, chunk_overlap: int = 0, percentile: int = 90) -> OllamaSemanticChunker:
+    """
+    Returns an OllamaSemanticChunker that uses percentile-based splitting.
+    chunk_size -> max_chunk_chars. chunk_overlap is accepted for compatibility but ignored.
+    """
     return OllamaSemanticChunker(
-        method="percentile",
-        percentile=90,
-        max_chunk_chars=chunk_size
-    )
-
+        percentile=percentile,
+        max_chunk_chars=chunk_size,
+        chunk_overlap = chunk_overlap
+        )
+'''

@@ -41,6 +41,8 @@ class ClarificationAgent(RoutedAgent):
         message: ClusterRoutedQueryMessage,
         ctx: MessageContext,
     ) -> None:
+        
+        print("ClarificationAgent received message")
 
         # ✅ Only handle ambiguous cases
         if message.restrict_cluster_ids is not None:

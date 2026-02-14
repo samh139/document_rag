@@ -73,6 +73,8 @@ class BankEngagementAgent(RoutedAgent):
         message: BankUserMessage,
         ctx: MessageContext,
     ) -> None:
+        
+        print("BankEngagementAgent received message")
 
         logger.info(f"[Engagement] User said: {message.content}")
 

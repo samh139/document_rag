@@ -29,6 +29,9 @@ async def chat_ws(websocket: WebSocket):
 
             elif msg.type == "CLARIFICATION_REPLY":
                 session = session_manager.get(msg.payload["session_id"])
+                if not session:
+                    raise RuntimeError("Session not found")
+
                 await handle_clarification_reply(session, msg.payload)
 
     except Exception:

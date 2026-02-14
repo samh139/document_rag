@@ -50,6 +50,9 @@ class FinalAnswerCollector(RoutedAgent):
         message: FinalAnswerMessage,
         ctx: MessageContext,
     ) -> None:
+        
+        print("FinalAnswerCollector received message")
+        
         # 🔁 REPLACEMENT FOR response_queue.put()
         await self.sink.handle_runtime_result(
             RuntimeResult(

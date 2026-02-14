@@ -30,7 +30,7 @@ class ConversationSession:
         self.websocket = websocket
 
         self.status: SessionStatus = "NEW"
-        self.runtime = Optional[RuntimeContext] = None
+        self.runtime_context: RuntimeContext | None = None
         self.paused_payload: Optional[dict[str, Any]] = None
 
         self.created_at = datetime.utcnow()

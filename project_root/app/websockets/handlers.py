@@ -9,21 +9,30 @@ from app.websockets.session import ConversationSession
 
 async def handle_user_message(
     session: ConversationSession,
-    msg: BankUserMessage,
+    payload: dict,
 ):
     # create runtime only once per session
-    if session.runtime is None:
+    if not session.runtime_context:
         sink = SessionEventSink(session)
-        session.runtime = RuntimeContext(session, sink)
+        session.runtime_context = RuntimeContext(session, sink)
 
-    await session.runtime.start(msg)
+    message = BankUserMessage(**payload)
+
+    await session.runtime_context.start(message)
 
 
 async def handle_clarification_reply(
     session: ConversationSession,
-    msg: ClarificationReplyMessage,
+    payload: dict,
 ):
     if session.status != "WAITING_FOR_USER":
         raise RuntimeError("Session not waiting for clarification")
 
-    await session.runtime.resume(msg)
+    if not session.runtime_context:
+        raise RuntimeError("Runtime not initialized for session")
+
+    message = ClarificationReplyMessage(**payload)
+
+    await session.runtime_context.resume(message)
+
+

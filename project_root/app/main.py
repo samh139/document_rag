@@ -1,65 +1,15 @@
 from fastapi import FastAPI
 
-from app.api.fastapi_route import router as chat_router
-from app.agentic.runtime_instance import runtime
-from app.agentic.state import response_queue
-
-from app.agentic.collectors.final_answer_collector import FinalAnswerCollector
-from app.agentic.engagement.bank_engagement_agent import BankEngagementAgent
-from app.agentic.rag.bank_rag_retrieval_agent import BankRAGRetrievalAgent
-from app.agentic.rag.bank_rag_synthesis_agent import BankRAGSynthesisAgent
-from app.agentic.query_refiner.query_refiner_agent import QueryRefinerAgent
-from app.agentic.cluster_agent.cluster_agent import ClusterRouterAgent
+from app.websockets.router import router as ws_router
 from app.memory_team.ltm.index_bootstrap import ensure_ltm_index
-from app.agentic.clarification.clarification_agent import ClarificationAgent
-#from app.agentic.ui_bridge.ui_bridge_agent import UIBridgeAgent
 
 app = FastAPI(title="Banking RAG Assistant")
 
 
 @app.on_event("startup")
 async def startup_event():
-    ## Ensure LTM index exists
+    # Only global infra things here
     ensure_ltm_index()
-    
-    # Register agents ONCE
-    await BankEngagementAgent.register(
-        runtime, "bank_engagement", BankEngagementAgent
-    )
-
-    await QueryRefinerAgent.register(
-        runtime, "query_refiner", QueryRefinerAgent
-    )
-
-    await ClusterRouterAgent.register(
-        runtime, "cluster_router", ClusterRouterAgent
-    )
-
-    await ClarificationAgent.register(
-        runtime, "clarification_agent", ClarificationAgent
-    )
-    
-    await BankRAGRetrievalAgent.register(
-        runtime, "bank_rag_retrieval", BankRAGRetrievalAgent
-    )
-
-    await BankRAGSynthesisAgent.register(
-        runtime, "bank_rag_synthesis", BankRAGSynthesisAgent
-    )
-
-    await FinalAnswerCollector.register(
-        runtime,
-        "final_answer_collector",
-        lambda: FinalAnswerCollector(response_queue),
-    )
-
-    # 🚀 Start runtime once
-    runtime.start()
 
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    await runtime.stop_when_idle()
-
-
-app.include_router(chat_router, prefix="/api")
+app.include_router(ws_router)
