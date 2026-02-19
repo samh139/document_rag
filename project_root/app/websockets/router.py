@@ -5,6 +5,8 @@ from app.websockets.handlers import (
     handle_user_message,
     handle_clarification_reply,
 )
+import traceback
+
 
 router = APIRouter()
 session_manager = SessionManager()
@@ -34,5 +36,7 @@ async def chat_ws(websocket: WebSocket):
 
                 await handle_clarification_reply(session, msg.payload)
 
-    except Exception:
+    except Exception as e:
+        print("WebSocket error:", e)
+        traceback.print_exc()
         await websocket.close()

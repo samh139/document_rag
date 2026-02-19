@@ -34,10 +34,9 @@ class RuntimeContext:
         self.sink = sink
         self.runtime : SingleThreadedAgentRuntime | None = None
 
-    async def initialize(self, session):
+    async def initialize(self):
         self.runtime = await create_runtime(self.sink)
-        await self.runtime.start()
-        
+        self.runtime.start()   # ← removed await
 
     async def start(self, message: BankUserMessage):
         """
