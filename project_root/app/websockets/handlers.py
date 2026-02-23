@@ -15,8 +15,11 @@ async def handle_user_message(
     if not session.runtime_context:
         sink = SessionEventSink(session)
         session.runtime_context = RuntimeContext(session, sink)
+        print("sink created :",sink)
+        print("session.runtime_context created :",session.runtime_context)
 
     message = BankUserMessage(**payload)
+    print("BankUserMessage created :",message)
 
     await session.runtime_context.start(message)
 

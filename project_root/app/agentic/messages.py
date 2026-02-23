@@ -4,16 +4,15 @@ from dataclasses import dataclass
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, Literal
 from datetime import datetime
-from fastapi import WebSocket
 
 @dataclass
 class BankUserMessage:
     content: str
-    session_id :str
+    session_id: str
     user_id: str
 
-@dataclass
-class EngagementOutputMessage:
+
+class EngagementOutputMessage(BaseModel):
     intent: str
     user_query: str
     response_text: str

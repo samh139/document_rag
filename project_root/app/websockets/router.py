@@ -20,6 +20,7 @@ async def chat_ws(websocket: WebSocket):
         while True:
             raw = await websocket.receive_json()
             msg = WSMessage(**raw)
+            print("Message : ",msg)
 
             if msg.type == "BANK_USER_MESSAGE":
                 session = session_manager.get_or_create(

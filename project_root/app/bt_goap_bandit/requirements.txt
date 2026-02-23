@@ -1,0 +1,15 @@
+# Core dependencies
+py_trees>=2.2
+requests>=2.31
+elasticsearch>=9.0.0
+numpy>=1.26
+pandas>=2.2
+
+# NLP and AI components
+transformers>=4.44
+nltk>=3.9
+pydantic>=2.8
+
+# Optional utilities
+tqdm>=4.66
+rich>=13.7
