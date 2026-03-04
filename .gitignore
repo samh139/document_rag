@@ -9,3 +9,4 @@ __pycache__/
 app/config/secrets.env
 *.zip
 old_data/
+new_kf_ret_env/
