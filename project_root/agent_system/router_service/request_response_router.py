@@ -9,6 +9,7 @@ from agent_system.agentic.topics import AgenticTopic
 
 from agent_system.router_service.state import pending_requests
 from agent_system.router_service.agent_runtime import initialize_runtime, runtime
+from autogen_core import TopicId
 
 
 # ----------------------------
@@ -52,7 +53,10 @@ async def process_message(data: dict):
             session_id=session_id,
             user_id="default_user"
         ),
-        topic_id=AgenticTopic.USER_INPUT.value
+        topic_id=TopicId(
+        AgenticTopic.USER_INPUT.value,
+        source="router"
+    )
     )
 
     try:
@@ -72,9 +76,10 @@ async def process_message(data: dict):
             "message": "Sorry, request timed out."
         }
 
-    return {
+    return { ## FIx the issue
         "session_id": session_id,
-        "message": final_message
+        "message": final_message.answer,
+        "citations": final_message.citations
     }
 
 
