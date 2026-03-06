@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.memory_team.clustering.vector_loader import get_es_connection
+from agent_system.agentic.memory_team.clustering.vector_loader import get_es_connection
 
 def resolve_cluster_ids_to_chunk_ids(
     cluster_ids: List[str],

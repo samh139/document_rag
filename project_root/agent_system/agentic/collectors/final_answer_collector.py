@@ -10,7 +10,6 @@ from agent_system.agentic.topics import AgenticTopic
 from agent_system.agentic.messages import FinalAnswerMessage
 from agent_system.agentic.memory_team.stm.agent import store_conversation_to_stm
 from agent_system.agentic.memory_team.ltm.ltm_service import store_conversation_to_es
-        
 
 
 @type_subscription(topic_type=AgenticTopic.FINAL_RESPONSE.value)
@@ -20,9 +19,9 @@ class FinalAnswerCollector(RoutedAgent):
         super().__init__("FinalAnswerCollector")
         self.pending_requests = pending_requests
 
+
     async def _persist_memory(self, message: FinalAnswerMessage):
         try:
-            # STM (assumed async)
             await store_conversation_to_stm(
                 user_id=message.user_id,
                 session_id=message.session_id,
@@ -30,7 +29,6 @@ class FinalAnswerCollector(RoutedAgent):
                 bot_response=message.answer,
             )
 
-            # LTM (sync → thread)
             await asyncio.to_thread(
                 store_conversation_to_es,
                 message.user_id,
@@ -52,14 +50,15 @@ class FinalAnswerCollector(RoutedAgent):
         ctx: MessageContext,
     ) -> None:
 
-        future = self.pending_requests.get(message.session_id)
+        # Remove request from pending map
+        future = self.pending_requests.pop(message.session_id, None)
 
         if future and not future.done():
             future.set_result(message)
+        else:
+            print(f"[Collector] No pending request for session {message.session_id}")
 
         asyncio.create_task(
             self._persist_memory(message),
             name=f"persist_memory:{message.session_id}"
         )
-
-        

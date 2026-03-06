@@ -2,9 +2,7 @@
 from datetime import datetime
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
-from app.utils.basic_utils import normalize_scores
-#from app_configs.app_env import app_env
-
+from typing import List, Dict
 import numpy as np
 
 es_host="http://localhost:9200"
@@ -12,6 +10,26 @@ es_ltm_index="conversations"
 es = Elasticsearch(es_host)
 
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+
+
+def normalize_scores(items: List[Dict], score_key: str) -> None:
+    """
+    Normalize scores in-place between 0 and 1 for the given key.
+    """
+    if not items:
+        return
+    
+    scores = [item.get(score_key, 0) for item in items]
+    min_score = min(scores)
+    max_score = max(scores)
+    
+    # Avoid division by zero
+    if max_score == min_score:
+        for item in items:
+            item[score_key] = 1.0  # if all scores are equal, set to 1
+    else:
+        for item in items:
+            item[score_key] = (item.get(score_key, 0) - min_score) / (max_score - min_score)
 
 def store_conversation_to_es(user_id:str,session_id: str, user_message: str, bot_response: str) -> str:
     print("Storing conversation to ES...")

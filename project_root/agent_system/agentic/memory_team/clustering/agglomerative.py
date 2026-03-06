@@ -11,7 +11,7 @@ import numpy as np
 import uuid
 from typing import Dict, List
 
-from app.memory_team.clustering.config import (
+from agent_system.agentic.memory_team.clustering.config import (
     AGGLOMERATIVE_DISTANCE_THRESHOLD,
     AGGLOMERATIVE_MIN_CLUSTER_SIZE,
     VERBOSE,

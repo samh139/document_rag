@@ -1,6 +1,6 @@
 # app/agentic/rag/summarize_agent.py
 
-from app.configs.llm_config import fire_fast_modal_request_chat_get_dict ,fire_fast_modal_request_chat
+from agent_system.agentic.app.configs.llm_config import fire_fast_modal_request_chat_get_dict ,fire_fast_modal_request_chat
 
 async def get_summary_of_content(context: str) -> str:
     """

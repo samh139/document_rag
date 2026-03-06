@@ -1,8 +1,8 @@
 # agents/rag/retriever_agent.py
 
 from typing import List, Dict
-from app.agents.rag.embedding_client import embed_text
-from app.agents.rag.retriever import hybrid_retrieve
+from agent_system.agentic.utils.rag.embedding_client import embed_text
+from agent_system.agentic.utils.rag.retriever import hybrid_retrieve
 from typing import Optional
 
 class RetrieverAgent:

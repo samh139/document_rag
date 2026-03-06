@@ -2,7 +2,7 @@
 import unittest
 import uuid
 from elasticsearch import Elasticsearch
-from app.memory_team.ltm.ltm_service import store_conversation_to_es
+from ltm.ltm_service import store_conversation_to_es
 
 ES_URL = "http://localhost:9200"
 INDEX_NAME = "conversations"

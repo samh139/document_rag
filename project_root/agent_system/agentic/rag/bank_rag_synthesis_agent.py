@@ -10,8 +10,8 @@ from autogen_core import (
     type_subscription,
 )
 
-from app.agentic.topics import AgenticTopic
-from app.agentic.messages import (
+from agent_system.agentic.topics import AgenticTopic
+from agent_system.agentic.messages import (
     RAGRetrievalResultMessage,
     FinalAnswerMessage,
 )

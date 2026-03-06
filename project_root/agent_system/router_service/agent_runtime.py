@@ -5,8 +5,8 @@ from agent_system.agentic.query_refiner.query_refiner_agent import QueryRefinerA
 from agent_system.agentic.knowledge.knowledge_agent import KnowledgeAgent
 from agent_system.agentic.rag.bank_rag_retrieval_agent import BankRAGRetrievalAgent
 from agent_system.agentic.rag.bank_rag_synthesis_agent import BankRAGSynthesisAgent
-from agent_system.agentic.collectors.clarification_collector import ClarificationCollector
-from agentic.collectors.final_answer_collector import FinalAnswerCollector
+#from agent_system.agentic.collectors.clarification_collector import ClarificationCollector
+from agent_system.agentic.collectors.final_answer_collector import FinalAnswerCollector
 
 from .state import pending_requests
 
@@ -33,11 +33,11 @@ async def initialize_runtime():
     await BankRAGSynthesisAgent.register(
         runtime, "rag_synthesis", BankRAGSynthesisAgent
     )
-
+    '''
     await ClarificationCollector.register(
         runtime, "clarification_collector", ClarificationCollector
     )
-
+    '''
     await FinalAnswerCollector.register(
         runtime,
         "final_answer_collector",
@@ -45,3 +45,5 @@ async def initialize_runtime():
     )
 
     runtime.start()
+
+    return runtime

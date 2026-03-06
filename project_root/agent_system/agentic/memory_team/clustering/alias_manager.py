@@ -10,7 +10,7 @@
 
 from datetime import datetime
 from elasticsearch import Elasticsearch
-from app.memory_team.clustering.config import CLUSTERS_ALIAS, ES_HOST
+from agent_system.agentic.memory_team.clustering.config import CLUSTERS_ALIAS, ES_HOST
 from app.app_logger import LoggerFactory
 logger = LoggerFactory.get_logger("alias_manager")
 

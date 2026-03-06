@@ -139,7 +139,7 @@ class ClassifierAgent(RoutedAgent):
         await self.publish_message(
             output,
             topic_id=TopicId(
-                AgenticTopic.ENGAGEMENT_OUTPUT.value,
+                AgenticTopic.CLASSIFIER_OUTPUT.value,
                 source=self.id.key,
             ),
         )

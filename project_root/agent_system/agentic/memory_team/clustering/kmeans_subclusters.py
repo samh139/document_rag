@@ -9,9 +9,9 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 from app.app_logger import LoggerFactory
-from app.memory_team.clustering.es_writer import ESWriter
-from app.memory_team.clustering.cluster_summarizer import summarize_cluster
-from app.memory_team.clustering.chunk_fetcher import fetch_chunk_texts
+from agent_system.agentic.memory_team.clustering.es_writer import ESWriter
+from agent_system.agentic.memory_team.clustering.cluster_summarizer import summarize_cluster
+from agent_system.agentic.memory_team.clustering.chunk_fetcher import fetch_chunk_texts
 
 logger = LoggerFactory.get_logger("kmeans_subclusters")
 

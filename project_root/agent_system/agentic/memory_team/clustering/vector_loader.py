@@ -12,9 +12,8 @@ import time
 import numpy as np
 from typing import List, Tuple, Dict, Optional
 from elasticsearch import Elasticsearch, helpers
-
-from app.app_logger import LoggerFactory
-from app.memory_team.clustering.config import CHUNKS_INDEX
+from agent_system.agentic.app.app_logger import LoggerFactory
+from agent_system.agentic.memory_team.clustering.config import CHUNKS_INDEX
 
 logger = LoggerFactory.get_logger("vector_loader")
 

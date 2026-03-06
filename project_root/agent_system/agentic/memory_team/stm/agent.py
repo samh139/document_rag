@@ -5,9 +5,9 @@ import sys
 # Add the project root to PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from typing import Dict,List
-from app.configs.llm_config import fire_fast_modal_request_chat_get_dict
-from app.memory_team.stm.store import save_stm,add_conversation, get_last_n_conversations, save_stm
-from app.agentic.rag.summarize_agent import get_summary_of_content
+from agent_system.agentic.app.configs.llm_config import fire_fast_modal_request_chat_get_dict
+from stm.store import save_stm,add_conversation, get_last_n_conversations, save_stm
+from agent_system.agentic.rag.summarize_agent import get_summary_of_content
 
 
 

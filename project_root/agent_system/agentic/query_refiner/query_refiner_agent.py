@@ -12,7 +12,7 @@ from agent_system.agentic.topics import AgenticTopic
 from agent_system.agentic.messages import ClassifierOutputMessage, RefinedQueryMessage, ClarificationReplyMessage
 from agent_system.agentic.memory_team.stm.store import get_stm_summary , get_clarification_context, clear_clarification_context
 from agent_system.agentic.memory_team.ltm.ltm_service import retrieve_ltm_context
-from agent_system.app.configs.llm_config import fire_fast_modal_request_chat
+from agent_system.agentic.app.configs.llm_config import fire_fast_modal_request_chat
 from typing import Union
 
 import logging

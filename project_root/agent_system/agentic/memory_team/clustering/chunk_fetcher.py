@@ -1,5 +1,5 @@
-from app.memory_team.clustering.config import CHUNKS_INDEX
-from app.memory_team.clustering.vector_loader import get_es_connection
+from agent_system.agentic.memory_team.clustering.config import CHUNKS_INDEX
+from agent_system.agentic.memory_team.clustering.vector_loader import get_es_connection
 
 
 def fetch_chunk_texts(chunk_ids, limit=8):
