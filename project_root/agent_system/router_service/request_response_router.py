@@ -75,12 +75,28 @@ async def process_message(data: dict):
             "session_id": session_id,
             "message": "Sorry, request timed out."
         }
+    
+    citations = []
 
+    for c in final_message.citations:
+        citations.append({
+            "chunk_id": c.chunk_id,
+            "file_name": c.file_name,
+            "chunk_content": c.chunk_content[:120]
+        })
+
+    return {
+        "session_id": session_id,
+        "message": final_message.answer,
+        "citations": citations
+    }
+    '''
     return { ## FIx the issue
         "session_id": session_id,
         "message": final_message.answer,
         "citations": final_message.citations
     }
+    '''
 
 
 # ----------------------------
@@ -103,9 +119,24 @@ async def router_loop():
             print("Kafka Error:", msg.error())
             continue
 
-        data = json.loads(msg.value().decode())
-        print("[Router] Received from Kafka:", data)
+        raw = msg.value()
 
+        if raw is None:
+            continue
+
+        text = raw.decode().strip()
+
+        if not text:
+            print("[Router] Skipping empty Kafka message")
+            continue
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            print("[Router] Invalid JSON:", text)
+            continue
+
+        print("[Router] Received from Kafka:", data)
         response = await process_message(data)
 
         producer.produce(

@@ -42,7 +42,12 @@ Rules:
         for i, c in enumerate(chunks, start=1):
             text = c["content"].strip()
             header = f"\n[Chunk {i} | Source: {c.get('metadata', {}).get('file_name','')}]"
-            block = f"{header}\n{text}\n"
+            #block = f"{header}\n{text}\n"
+            block = f"""
+            {header}
+            CONTENT:
+            {text}
+            """
 
             if total_chars + len(block) > max_chars:
                 break
