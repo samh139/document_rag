@@ -1,5 +1,5 @@
 # app/memory_team/ltm/index_bootstrap.py
-from app.memory_team.ltm.create_ltm_index import es, index_name, mapping
+from ltm.create_ltm_index import es, index_name, mapping
 
 def ensure_ltm_index():
     if not es.indices.exists(index=index_name):

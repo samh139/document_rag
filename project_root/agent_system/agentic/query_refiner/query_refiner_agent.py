@@ -8,11 +8,11 @@ from autogen_core import (
     TopicId,
 )
 
-from app.agentic.topics import AgenticTopic
-from app.agentic.messages import EngagementOutputMessage, RefinedQueryMessage, ClarificationReplyMessage
-from app.memory_team.stm.store import get_stm_summary , get_clarification_context, clear_clarification_context
-from app.memory_team.ltm.ltm_service import retrieve_ltm_context
-from app.configs.llm_config import fire_fast_modal_request_chat
+from agent_system.agentic.topics import AgenticTopic
+from agent_system.agentic.messages import ClassifierOutputMessage, RefinedQueryMessage, ClarificationReplyMessage
+from agent_system.agentic.memory_team.stm.store import get_stm_summary , get_clarification_context, clear_clarification_context
+from agent_system.agentic.memory_team.ltm.ltm_service import retrieve_ltm_context
+from agent_system.agentic.app.configs.llm_config import fire_fast_modal_request_chat
 from typing import Union
 
 import logging
@@ -98,7 +98,7 @@ Task:
 """
 
 # ------------------------------------------------------------------
-@type_subscription(topic_type=AgenticTopic.ENGAGEMENT_OUTPUT.value)
+@type_subscription(topic_type=AgenticTopic.CLASSIFIER_OUTPUT.value)
 @type_subscription(topic_type=AgenticTopic.CLARIFICATION_REPLY.value)
 class QueryRefinerAgent(RoutedAgent):
 
@@ -107,7 +107,7 @@ class QueryRefinerAgent(RoutedAgent):
 
     # --------------------------------------------------------------
     @message_handler
-    async def handle_message(self, message :Union[EngagementOutputMessage, ClarificationReplyMessage], ctx: MessageContext) -> None:
+    async def handle_message(self, message :Union[ClassifierOutputMessage, ClarificationReplyMessage], ctx: MessageContext) -> None:
 
         if isinstance(message, ClarificationReplyMessage):
             clarification = get_clarification_context(
@@ -176,7 +176,7 @@ class QueryRefinerAgent(RoutedAgent):
             session_id=message.session_id,
             top_n=3
         )
-        print(f"LTM Results from QueryRefinerAgent: {ltm_results}")
+        #print(f"LTM Results from QueryRefinerAgent: {ltm_results}")
 
         user_prompt = f"""
         Current User Query:
@@ -198,6 +198,7 @@ class QueryRefinerAgent(RoutedAgent):
             system_prompt=system_prompt,
             user_prompt=user_prompt,
         ).strip()
+        print(f"Refined Query from QueryRefinerAgent: {refined_query}")
 
         output = RefinedQueryMessage(
             refined_query=refined_query,

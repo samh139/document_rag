@@ -15,7 +15,7 @@
 from datetime import datetime
 import numpy as np
 
-from app.memory_team.clustering.config import (
+from agent_system.agentic.memory_team.clustering.config import (
     CHUNKS_INDEX,
     AGGLOMERATIVE_MIN_CLUSTER_SIZE,
     SUBCLUSTER_MIN_SIZE,
@@ -23,13 +23,13 @@ from app.memory_team.clustering.config import (
     EMBEDDING_DIM
 )
 
-from app.memory_team.clustering.vector_loader import load_all_vectors_and_ids , get_es_connection
-from app.memory_team.clustering.agglomerative import run_agglomerative_clustering
-from app.memory_team.clustering.kmeans_subclusters import build_subclusters_for_root_cluster
-from app.memory_team.clustering.es_writer import ESWriter
+from agent_system.agentic.memory_team.clustering.vector_loader import load_all_vectors_and_ids , get_es_connection
+from agent_system.agentic.memory_team.clustering.agglomerative import run_agglomerative_clustering
+from agent_system.agentic.memory_team.clustering.kmeans_subclusters import build_subclusters_for_root_cluster
+from agent_system.agentic.memory_team.clustering.es_writer import ESWriter
 from app.app_logger import LoggerFactory
-from app.memory_team.clustering.cluster_summarizer import summarize_cluster
-from app.memory_team.clustering.chunk_fetcher import fetch_chunk_texts
+from agent_system.agentic.memory_team.clustering.cluster_summarizer import summarize_cluster
+from agent_system.agentic.memory_team.clustering.chunk_fetcher import fetch_chunk_texts
 
 logger = LoggerFactory.get_logger("cluster_builder")
 

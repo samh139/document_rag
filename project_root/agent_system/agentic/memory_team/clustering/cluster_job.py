@@ -16,10 +16,10 @@ from datetime import datetime
 import traceback
 import time
 
-from app.memory_team.clustering.alias_manager import AliasManager
-from app.memory_team.clustering.es_writer import ESWriter
-from app.memory_team.clustering.cluster_builder import build_all_clusters
-from app.memory_team.clustering.config import (
+from agent_system.agentic.memory_team.clustering.alias_manager import AliasManager
+from agent_system.agentic.memory_team.clustering.es_writer import ESWriter
+from agent_system.agentic.memory_team.clustering.cluster_builder import build_all_clusters
+from agent_system.agentic.memory_team.clustering.config import (
     CLUSTERS_ALIAS,
     DRY_RUN,
 )

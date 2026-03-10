@@ -4,11 +4,16 @@ import asyncio
 import json
 from confluent_kafka import Consumer, Producer
 
-from agentic.messages import UserMessage
-from agentic.topics import AgenticTopic
+from agent_system.agentic.messages import UserMessage
+from agent_system.agentic.topics import AgenticTopic
 
-from state import pending_requests
-from agent_runtime import initialize_runtime, runtime
+from agent_system.router_service.state import pending_requests
+from agent_system.router_service.agent_runtime import initialize_runtime, runtime
+from autogen_core import TopicId
+
+import logging
+
+logging.getLogger("autogen_core").setLevel(logging.WARNING)
 
 
 # ----------------------------
@@ -48,16 +53,19 @@ async def process_message(data: dict):
     # 🔥 Publish message into Agent Runtime
     await runtime.publish_message(
         UserMessage(
+            content=user_message,
             session_id=session_id,
-            user_query=user_message,
-            user_id="default_user"  # adjust if needed
+            user_id="default_user"
         ),
-        topic=AgenticTopic.USER_INPUT.value
+        topic_id=TopicId(
+        AgenticTopic.USER_INPUT.value,
+        source="router"
+    )
     )
 
     try:
         # Wait for FinalAnswerCollector to resolve
-        final_message = await asyncio.wait_for(future, timeout=60)
+        final_message = await asyncio.wait_for(future, timeout=180)
 
     except asyncio.TimeoutError:
         print(f"[Router] Timeout for session {session_id}")
@@ -71,12 +79,22 @@ async def process_message(data: dict):
             "session_id": session_id,
             "message": "Sorry, request timed out."
         }
+    
+    citations = []
+
+    for c in final_message.citations:
+        citations.append({
+            "chunk_id": c.chunk_id,
+            "file_name": c.file_name,
+            "chunk_content": c.chunk_content[:120]
+        })
 
     return {
         "session_id": session_id,
-        "message": final_message
+        "answer": final_message.answer,
+        "citations": citations
     }
-
+   
 
 # ----------------------------
 # Main Router Loop (Async)
@@ -98,9 +116,24 @@ async def router_loop():
             print("Kafka Error:", msg.error())
             continue
 
-        data = json.loads(msg.value().decode())
-        print("[Router] Received from Kafka:", data)
+        raw = msg.value()
 
+        if raw is None:
+            continue
+
+        text = raw.decode().strip()
+
+        if not text:
+            print("[Router] Skipping empty Kafka message")
+            continue
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            print("[Router] Invalid JSON:", text)
+            continue
+
+        print("[Router] Received from Kafka:", data)
         response = await process_message(data)
 
         producer.produce(
@@ -120,7 +153,7 @@ async def router_loop():
 
 async def main():
 
-    await initialize_runtime()
+    runtime = await initialize_runtime()
     await router_loop()
 
 

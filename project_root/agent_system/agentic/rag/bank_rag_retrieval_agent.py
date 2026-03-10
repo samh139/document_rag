@@ -9,19 +9,19 @@ from autogen_core import (
     type_subscription,
 )
 
-from app.agentic.topics import AgenticTopic
-from app.agentic.messages import (
+from agent_system.agentic.topics import AgenticTopic
+from agent_system.agentic.messages import (
     ClusterRoutedQueryMessage, RAGRetrievalResultMessage
 )
-from app.memory_team.clustering.cluster_resolver import (
+from agent_system.agentic.memory_team.clustering.cluster_resolver import (
     resolve_cluster_ids_to_chunk_ids
 )
 
 # 🔁 Import your existing retriever
-from app.agents.rag.retriever_agent import RetrieverAgent
+from agent_system.agentic.utils.rag.retriever_agent import RetrieverAgent
 
 logger = logging.getLogger("BankRAGRetrievalAgent")
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 
 @type_subscription(topic_type=AgenticTopic.CLUSTER_ROUTED_QUERY_TOPIC.value)

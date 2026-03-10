@@ -6,21 +6,19 @@ from autogen_core import (
     type_subscription,
 )
 
-from app.agentic.topics import AgenticTopic
-from app.agentic.messages import FinalAnswerMessage
-from app.memory_team.stm.agent import store_conversation_to_stm
-from app.memory_team.ltm.ltm_service import store_conversation_to_es
-
-from app.runtime.runtime_result import RuntimeResult
-from app.runtime.event_sink import RuntimeEventSink
+from agent_system.agentic.topics import AgenticTopic
+from agent_system.agentic.messages import FinalAnswerMessage
+from agent_system.agentic.memory_team.stm.agent import store_conversation_to_stm
+from agent_system.agentic.memory_team.ltm.ltm_service import store_conversation_to_es
 
 
 @type_subscription(topic_type=AgenticTopic.FINAL_RESPONSE.value)
 class FinalAnswerCollector(RoutedAgent):
 
-    def __init__(self, sink: RuntimeEventSink):
+    def __init__(self, pending_requests: dict):
         super().__init__("FinalAnswerCollector")
-        self.sink = sink
+        self.pending_requests = pending_requests
+
 
     async def _persist_memory(self, message: FinalAnswerMessage):
         try:
@@ -44,24 +42,22 @@ class FinalAnswerCollector(RoutedAgent):
         except Exception as e:
             print(f"[Memory ERROR] session={message.session_id} err={e}")
 
+
     @message_handler
     async def handle_final_answer(
         self,
         message: FinalAnswerMessage,
         ctx: MessageContext,
     ) -> None:
-        
-        print("FinalAnswerCollector received message")
-        
-        # 🔁 REPLACEMENT FOR response_queue.put()
-        await self.sink.handle_runtime_result(
-            RuntimeResult(
-                status="COMPLETE",
-                payload=message.dict()
-            )
-        )
 
-        # 🧠 fire-and-forget persistence
+        # Remove request from pending map
+        future = self.pending_requests.pop(message.session_id, None)
+
+        if future and not future.done():
+            future.set_result(message)
+        else:
+            print(f"[Collector] No pending request for session {message.session_id}")
+
         asyncio.create_task(
             self._persist_memory(message),
             name=f"persist_memory:{message.session_id}"

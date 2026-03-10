@@ -4,7 +4,7 @@
 # ---------------------------------------------------------
 
 from elasticsearch import Elasticsearch
-from app.memory_team.clustering.config import ES_HOST, EMBEDDING_DIM
+from agent_system.agentic.memory_team.clustering.config import ES_HOST, EMBEDDING_DIM
 from app.app_logger import LoggerFactory
 logger = LoggerFactory.get_logger("es_writer")
 

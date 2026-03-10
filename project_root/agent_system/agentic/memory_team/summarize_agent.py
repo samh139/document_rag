@@ -1,6 +1,6 @@
 # app/agentic/rag/summarize_agent.py
 
-from agent_system.agentic.app.configs.llm_config import fire_fast_modal_request_chat_get_dict ,fire_fast_modal_request_chat
+from agent_system.agentic.app.configs.llm_config import  fire_fast_modal_request_chat
 
 async def get_summary_of_content(context: str) -> str:
     """
@@ -44,5 +44,5 @@ A single, natural-language summary (≤200 tokens) that conveys the chatbot’s 
         user_prompt=user_prompt
     )
 
-    print("STM Summary Response:", response)
+    #print("STM Summary Response:", response)
     return response.strip()

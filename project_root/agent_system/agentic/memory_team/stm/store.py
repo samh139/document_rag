@@ -1,7 +1,11 @@
 import json
 from typing import Dict, List
-from app.memory_team.stm.redis_client import redis_client
 from datetime import datetime, timedelta
+import redis
+
+REDIS_URL = "redis://127.0.0.1:6379/0"
+
+redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 
 SLIDING_WINDOW_SIZE = 5

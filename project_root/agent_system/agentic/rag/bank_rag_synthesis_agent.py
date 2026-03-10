@@ -10,8 +10,8 @@ from autogen_core import (
     type_subscription,
 )
 
-from app.agentic.topics import AgenticTopic
-from app.agentic.messages import (
+from agent_system.agentic.topics import AgenticTopic
+from agent_system.agentic.messages import (
     RAGRetrievalResultMessage,
     FinalAnswerMessage,
 )
@@ -22,7 +22,7 @@ from typing import List, Dict
 # Logging
 # ------------------------------------------------------------------
 logger = logging.getLogger("BankRAGSynthesisAgent")
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 # ------------------------------------------------------------------
 # LLM config
@@ -46,8 +46,17 @@ Rules:
 - Do NOT use external knowledge
 - Do NOT invent values not present in the context
 - If the context contains relevant information, you MUST answer using it
-- Only say "I don’t have this information in the available bank documents"
-  if the context has NO information related to the question at all
+- IMPORTANT:
+The context may contain tables, broken formatting, or fragmented sentences.
+You MUST carefully scan the entire context for relevant financial values
+such as interest rates, charges, limits, or account rules.
+
+Even if the wording is not exact, extract the closest relevant information.
+
+If a table contains the answer, interpret the table correctly.
+
+Only say "I don’t have this information in the available bank documents"
+if the context truly contains nothing about the topic.
 - Be concise and factual
 - Clearly list charges when applicable
 """
@@ -80,9 +89,9 @@ class BankRAGSynthesisAgent(RoutedAgent):
 
             block = f"{header}\n{text}\n"
 
-            logger.info(f"[DEBUG] Chunk {i} preview: {text[:200]}")
-            logger.info(f"[DEBUG] Block length: {len(block)}")
-            logger.info(f"[DEBUG] Total chars so far: {total_chars}")
+            logger.info(f"[DEBUG] Chunk {i} preview: {text[:50]}")
+            #logger.info(f"[DEBUG] Block length: {len(block)}")
+            #logger.info(f"[DEBUG] Total chars so far: {total_chars}")
 
             if total_chars + len(block) > max_chars:
                 logger.info("[DEBUG] Max context size reached, stopping")
@@ -107,16 +116,16 @@ class BankRAGSynthesisAgent(RoutedAgent):
         context = self._build_context(chunks)
 
         prompt = f"""
-    {SYSTEM_PROMPT}
+        {SYSTEM_PROMPT}
 
-    CONTEXT:
-    {context}
+        CONTEXT:
+        {context}
 
-    USER QUESTION:
-    {query}
+        USER QUESTION:
+        {query}
 
-    ANSWER:
-"""
+        ANSWER:
+    """
 
         body = {
             "model": SYNTHESIS_MODEL,

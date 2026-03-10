@@ -5,9 +5,9 @@ import sys
 # Add the project root to PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from typing import Dict,List
-from app.configs.llm_config import fire_fast_modal_request_chat_get_dict
-from app.memory_team.stm.store import save_stm,add_conversation, get_last_n_conversations, save_stm
-from app.agentic.rag.summarize_agent import get_summary_of_content
+from agent_system.agentic.app.configs.llm_config import fire_fast_modal_request_chat_get_dict
+from stm.store import save_stm,add_conversation, get_last_n_conversations, save_stm
+from agent_system.agentic.memory_team.summarize_agent import get_summary_of_content
 
 
 
@@ -24,8 +24,8 @@ async def store_conversation_to_stm(user_id:str,session_id: str, user_message: s
               user_query=user_message,
               bot_response=bot_summary
           )
-          print("user-query,response: ",user_message,bot_response)
-        #   print(f"STM updated for session {session_id}: {updated_stm}")
+          if updated_stm:
+            print(f"STM updated for session {session_id}: {updated_stm}")
       except Exception as e:
           print("STM update failed:", e)
 

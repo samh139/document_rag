@@ -6,13 +6,13 @@ from typing import List, Dict, Any, Optional, Literal
 from datetime import datetime
 
 @dataclass
-class BankUserMessage:
+class UserMessage:
     content: str
     session_id: str
     user_id: str
 
 
-class EngagementOutputMessage(BaseModel):
+class ClassifierOutputMessage(BaseModel):
     intent: str
     user_query: str
     response_text: str
