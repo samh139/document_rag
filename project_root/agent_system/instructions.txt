@@ -1,0 +1,57 @@
+STEPS-
+In one terminal-  run main.py
+
+(new_kf_ret_env) sameerh@MMACBNG0522007 websocket_service % pwd                                        
+/Users/sameerh/Desktop/New Dsprawl/Dsprawl Retrieval/project_root/agent_system/websocket_service
+(new_kf_ret_env) sameerh@MMACBNG0522007 websocket_service % uvicorn main:app --host 0.0.0.0 --port 8000
+
+In 2nd terminal - run request_response_router.py
+
+(new_kf_ret_env) sameerh@MMACBNG0522007 project_root % python -m agent_system.router_service.request_response_router
+Router started..
+
+Then thru postman-
+Steps
+1️⃣ Open Postman
+2️⃣ Click
+
+New → WebSocket Request
+
+3️⃣ Enter URL
+
+ws://localhost:8000/ws/1
+
+4️⃣ Click Connect
+5️⃣ Send message
+
+{
+  "message": "What are ATM charges for SBI?"
+}
+
+6️⃣ You should receive response.
+
+
+
+For KAFKA side testing-
+Make sure-
+Kafka is up and running in 1st terminal
+sameerh@MMACBNG0522007 kafka_2.13-4.1.0 % bin/kafka-server-start.sh config/server.properties
+
+And 2nd terminal - run request_response_router.py
+
+And 3rd terminal - 
+
+sameerh@MMACBNG0522007 kafka_2.13-4.1.0 % bin/kafka-console-producer.sh \
+--topic chat-requests \
+--bootstrap-server localhost:9092
+And hit request-
+{"session_id":"4","message":"What are the chequebook issuance charges for SBI savings accounts?"}
+
+To validate the responses-
+
+sameerh@MMACBNG0522007 kafka_2.13-4.1.0 % bin/kafka-console-consumer.sh \
+--topic chat-responses \
+--bootstrap-server localhost:9092 \
+--from-beginning
+
+U will come to know the response

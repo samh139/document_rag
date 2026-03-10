@@ -176,7 +176,7 @@ class QueryRefinerAgent(RoutedAgent):
             session_id=message.session_id,
             top_n=3
         )
-        print(f"LTM Results from QueryRefinerAgent: {ltm_results}")
+        #print(f"LTM Results from QueryRefinerAgent: {ltm_results}")
 
         user_prompt = f"""
         Current User Query:
@@ -198,6 +198,7 @@ class QueryRefinerAgent(RoutedAgent):
             system_prompt=system_prompt,
             user_prompt=user_prompt,
         ).strip()
+        print(f"Refined Query from QueryRefinerAgent: {refined_query}")
 
         output = RefinedQueryMessage(
             refined_query=refined_query,

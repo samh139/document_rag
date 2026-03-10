@@ -116,16 +116,16 @@ class BankRAGSynthesisAgent(RoutedAgent):
         context = self._build_context(chunks)
 
         prompt = f"""
-    {SYSTEM_PROMPT}
+        {SYSTEM_PROMPT}
 
-    CONTEXT:
-    {context}
+        CONTEXT:
+        {context}
 
-    USER QUESTION:
-    {query}
+        USER QUESTION:
+        {query}
 
-    ANSWER:
-"""
+        ANSWER:
+    """
 
         body = {
             "model": SYNTHESIS_MODEL,

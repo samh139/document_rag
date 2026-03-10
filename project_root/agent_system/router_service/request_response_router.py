@@ -11,6 +11,10 @@ from agent_system.router_service.state import pending_requests
 from agent_system.router_service.agent_runtime import initialize_runtime, runtime
 from autogen_core import TopicId
 
+import logging
+
+logging.getLogger("autogen_core").setLevel(logging.WARNING)
+
 
 # ----------------------------
 # Kafka Setup
@@ -87,7 +91,7 @@ async def process_message(data: dict):
 
     return {
         "session_id": session_id,
-        "message": final_message.answer,
+        "answer": final_message.answer,
         "citations": citations
     }
    
