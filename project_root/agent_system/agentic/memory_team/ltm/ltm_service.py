@@ -1,15 +1,16 @@
 # store_ltm.py
 from datetime import datetime
 from elasticsearch import Elasticsearch
-from sentence_transformers import SentenceTransformer
+#from sentence_transformers import SentenceTransformer
 from typing import List, Dict
 import numpy as np
+import ollama
 
 es_host="http://localhost:9200"
 es_ltm_index="conversations"
 es = Elasticsearch(es_host)
 
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+#model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 
 def normalize_scores(items: List[Dict], score_key: str) -> None:
@@ -33,10 +34,10 @@ def normalize_scores(items: List[Dict], score_key: str) -> None:
 
 def store_conversation_to_es(user_id:str,session_id: str, user_message: str, bot_response: str) -> str:
     print("Storing conversation to ES...")
-    user_emb = model.encode(user_message,normalize_embeddings=True).tolist()
-    bot_emb = model.encode(bot_response,normalize_embeddings=True).tolist()
+    user_emb = ollama.embeddings(model="nomic-embed-text", prompt=user_message)["embedding"]
+    bot_emb = ollama.embeddings(model="nomic-embed-text", prompt=bot_response)["embedding"]
     combined_text = f"{user_message} {bot_response}"
-    combined_emb = model.encode(combined_text,normalize_embeddings=True).tolist()
+    combined_emb = ollama.embeddings(model="nomic-embed-text", prompt=combined_text)["embedding"]
 
     doc = {
         "user_id": user_id,
@@ -92,7 +93,8 @@ def fetch_from_ltm( query: str, user_id: str, session_id: str, top_k: int = 10) 
     return _parse_ltm_hits(res["hits"]["hits"], score_key="bm_score")
 
 def fetch_knn_from_ltm( query: str, user_id: str, session_id: str, top_k: int = 10) -> list[dict]:
-    query_vec = model.encode(query,normalize_embeddings=True).tolist()
+    #query_vec = model.encode(query,normalize_embeddings=True).tolist()
+    query_vec = ollama.embeddings(model="nomic-embed-text", prompt=query)["embedding"]
     request_body = {
         "size": top_k,
         "knn": {

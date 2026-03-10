@@ -6,4 +6,5 @@ autogen-core
 requests
 redis
 elasticsearch
-sentence-transformers
+ollama
+uvicorn[standard]

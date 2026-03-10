@@ -90,14 +90,7 @@ async def process_message(data: dict):
         "message": final_message.answer,
         "citations": citations
     }
-    '''
-    return { ## FIx the issue
-        "session_id": session_id,
-        "message": final_message.answer,
-        "citations": final_message.citations
-    }
-    '''
-
+   
 
 # ----------------------------
 # Main Router Loop (Async)

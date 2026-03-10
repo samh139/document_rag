@@ -22,7 +22,7 @@ from typing import List, Dict
 # Logging
 # ------------------------------------------------------------------
 logger = logging.getLogger("BankRAGSynthesisAgent")
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 # ------------------------------------------------------------------
 # LLM config

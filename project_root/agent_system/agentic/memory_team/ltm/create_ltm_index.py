@@ -11,9 +11,9 @@ index_name = es_ltm_index
 mapping = {
     "mappings": {
         "properties": {
-            "user_embedding": {"type": "dense_vector", "dims": 384},
-            "bot_embedding": {"type": "dense_vector", "dims": 384},
-            "combined_embedding": {"type": "dense_vector", "dims": 384},
+            "user_embedding": {"type": "dense_vector", "dims": 768},
+            "bot_embedding": {"type": "dense_vector", "dims": 768},
+            "combined_embedding": {"type": "dense_vector", "dims": 768},
             "user_id": {"type": "keyword"},
             "session_id": {"type": "keyword"},
             "user_message": {"type": "text"},
