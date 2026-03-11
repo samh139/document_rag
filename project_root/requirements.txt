@@ -1,6 +1,5 @@
 # Core
 fastapi
-uvicorn[standard]
 pydantic
 
 # Elasticsearch
@@ -41,14 +40,10 @@ torch
 pytest
 pytest-asyncio
 
-##UI
-streamlit
 
 sentence-transformers
 torch
 transformers
-uvicorn
 fastapi
 pydantic
-jinahub-rerankers==0.0.0  # placeholder if using jina hub reranker; otherwise implement locally
 minio

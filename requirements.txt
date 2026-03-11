@@ -81,7 +81,7 @@ elasticsearch
 python-dotenv
 requests
 python-docx
-pypdf2
+PyPDF2
 langchain-text-splitters
 nltk
 tqdm
