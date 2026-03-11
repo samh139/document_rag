@@ -27,13 +27,13 @@ def choose_k_balanced(cluster_size: int) -> int:
         200–1000 → round(N/150), capped at 10
         >1000   → K = 10
     """
-    if cluster_size < 20:
+    if cluster_size < 5:
         return 1
-    if 20 <= cluster_size <= 200:
+    if 5 <= cluster_size <= 10:
         return 3
-    if 200 < cluster_size <= 1000:
-        return min(max(2, round(cluster_size / 150)), 10)
-    return 10
+    if 10 < cluster_size <= 50:
+        return min(max(2, round(cluster_size / 30)), 10)
+    return 5
 
 
 # ---------------------------------------------------------

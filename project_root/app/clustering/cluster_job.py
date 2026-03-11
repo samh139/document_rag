@@ -130,14 +130,8 @@ def run_clustering_job(dry_run: bool = DRY_RUN) -> dict:
 # ------------------------------------------------------------
 # CLI Entrypoint
 # ------------------------------------------------------------
-'''
-if __name__ == "__main__":
-    result = run_clustering_job()
-    print("\n================ CLUSTER JOB RESULT ================\n")
-    print(result)
-    print("\n====================================================\n")
-'''
 
+'''
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run clustering job")
     parser.add_argument(
@@ -153,4 +147,4 @@ if __name__ == "__main__":
     print("\n================ CLUSTER JOB RESULT ================\n")
     print(result)
     print("\n====================================================\n")
-
+'''

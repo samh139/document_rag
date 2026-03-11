@@ -99,26 +99,9 @@ def build_all_clusters(es_writer: ESWriter):
         print("Member IDs Generated:", len(member_ids))
 
         centroid = np.mean(member_vecs, axis=0)
-        #assert centroid.shape[0] == 384
-
-        # 1️⃣ Fetch representative chunk texts
-        sample_texts = fetch_chunk_texts(member_ids, limit=8)
-        #print(f"Sample texts for cluster {root_id}: {sample_texts}")
-
-        # 2️⃣ Generate summary (safe fallback)
-        if sample_texts:
-            try:
-                summary = summarize_cluster(sample_texts)
-            except Exception:
-                summary = "General banking documentation"
-        else:
-            summary = "General banking documentation"
 
         # Build parent doc
         root_doc = make_root_cluster_doc(root_id, centroid, member_ids)
-
-        # 4️⃣ Attach summary
-        root_doc["summary"] = summary
 
         # Write root cluster doc
         es_writer.write_cluster_doc(

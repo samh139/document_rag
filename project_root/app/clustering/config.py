@@ -59,7 +59,7 @@ should be subdivided and the range of K values for adaptive K-means.
 """
 
 # Minimum size for a Level-1 cluster to be subdivided
-SUBCLUSTER_MIN_SIZE = 150
+SUBCLUSTER_MIN_SIZE = 50
 
 # Clusters larger than this threshold must be subdivided.
 # This prevents runaway clusters (e.g., > 9000 chunks).

@@ -27,54 +27,7 @@ from sklearn.metrics.pairwise import cosine_distances
 # ---------------------------------------------------------
 # Main API — returns dict: {cluster_id: [indices]}
 # ---------------------------------------------------------
-##Test and Dev environment version without small cluster handling for easier debugging and analysis
-def run_agglomerative_clustering(
-    vectors: np.ndarray,
-    chunk_ids: List[str]
-) -> Dict[str, List[int]]:
 
-    N = len(chunk_ids)
-    if N == 0:
-        return {}
-    
-
-    # sample, not full O(N²)
-    sample = vectors[np.random.choice(len(vectors), size=min(300, len(vectors)), replace=False)]
-    dists = cosine_distances(sample)
-
-    threshold = np.percentile(dists, 75)  # or 70
-    print(f"Distance threshold set to {threshold:.4f} based on sample percentiles")
-
-    model = AgglomerativeClustering(
-        n_clusters=None,
-        metric="cosine",
-        linkage="average",
-        distance_threshold=threshold,
-    )
-
-    labels = model.fit_predict(vectors)
-
-    # label → indices
-    buckets: Dict[int, List[int]] = {}
-    for idx, label in enumerate(labels):
-        buckets.setdefault(label, []).append(idx)
-
-    result = {}
-
-    for idxs in buckets.values():
-        cid = f"lvl1-{uuid.uuid4().hex[:12]}"
-        result[cid] = idxs
-
-        if VERBOSE:
-            logger.info(f"• {cid}: {len(idxs)} members")
-
-    if VERBOSE:
-        logger.info(f"✅ Final Level-1 clusters: {len(result)}")
-
-    return result
-
-## Below one is for production with small cluster handling
-'''
 def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> Dict[str, List[int]]:
     """
     vectors: np.ndarray (N x 384)
@@ -87,7 +40,6 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
     N = len(chunk_ids)
     if VERBOSE:
         logger.info(f"🔹 Running Agglomerative on {N} vectors")
-        logger.info(f"🔹 Using distance_threshold={AGGLOMERATIVE_DISTANCE_THRESHOLD}")
 
     if N == 0:
         return {}
@@ -95,11 +47,19 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
     # -----------------------------------------------------
     # Compute clustering labels
     # -----------------------------------------------------
+    #sample = vectors[np.random.choice(len(vectors), size=min(500, len(vectors)), replace=False)] ## use this for prod
+
+    dists = cosine_distances(vectors)
+
+    threshold = np.percentile(dists, 70)  # or 70
+    logger.info(f"Distance threshold set to {threshold:.4f} based on above percentiles")
+
+
     model = AgglomerativeClustering(
         n_clusters=None,
         metric="cosine",
         linkage="average",
-        distance_threshold=AGGLOMERATIVE_DISTANCE_THRESHOLD,
+        distance_threshold=threshold,
     )
 
     labels = model.fit_predict(vectors)
@@ -145,6 +105,7 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
 
     for _, tiny_idxs in small.items():
         large[largest_label].extend(tiny_idxs)
+    print(f"🔹 Merged {len(small)} small clusters into: {largest_label}")
 
     # -----------------------------------------------------
     # Return clean dict: { cluster_id: [member_indices] }
@@ -161,4 +122,3 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
         logger.info(f"✅ Final Level-1 clusters: {len(result)}")
 
     return result
-'''
