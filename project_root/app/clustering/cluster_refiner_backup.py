@@ -20,7 +20,6 @@ from elasticsearch import Elasticsearch, helpers
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_distances
 
-
 # ----------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------
@@ -34,7 +33,6 @@ ES = Elasticsearch(ES_URL)
 OLLAMA_URL = "http://localhost:11434"
 
 MAX_RETRIES = 3
-
 
 # ----------------------------------------------------------------------
 # Ollama helpers
@@ -68,17 +66,11 @@ def fire_fast_modal_request(prompt: str):
     return ""
 
 
-# ----------------------------------------------------------------------
-# CHANGED FUNCTION 1 (BATCHED EMBEDDINGS)
-# ----------------------------------------------------------------------
-'''
 def embed_texts(texts):
 
     vectors = []
 
-    total = len(texts)
-
-    for i, text in enumerate(texts):
+    for text in texts:
 
         for attempt in range(MAX_RETRIES):
 
@@ -109,119 +101,32 @@ def embed_texts(texts):
             except Exception as e:
 
                 print(f"⚠️ Embedding retry {attempt+1}: {e}")
-
                 time.sleep(2)
-
-        if i % 32 == 0:
-            print(f"   embedded {i}/{total}")
 
     return np.array(vectors)
-'''
-def embed_texts(texts):
-
-    vectors = []
-
-    total = len(texts)
-
-    for i, text in enumerate(texts):
-
-        vec = None
-
-        for attempt in range(MAX_RETRIES):
-
-            try:
-
-                r = requests.post(
-                    f"{OLLAMA_URL}/api/embeddings",
-                    json={
-                        "model": "nomic-embed-text",
-                        "prompt": text
-                    },
-                    timeout=120
-                )
-
-                r.raise_for_status()
-
-                data = r.json()
-
-                if "embedding" not in data:
-                    raise ValueError("Missing embedding field")
-
-                vec = np.array(data["embedding"], dtype=float)
-
-                norm = np.linalg.norm(vec)
-
-                if norm > 0:
-                    vec = vec / norm
-
-                break
-
-            except Exception as e:
-
-                print(f"⚠️ Embedding retry {attempt+1}: {e}")
-                time.sleep(2)
-
-        # If embedding failed after retries
-        if vec is None or vec.size == 0:
-
-            print("⚠️ Using zero vector fallback")
-
-            vec = np.zeros(768)  # nomic-embed-text dimension
-
-        vectors.append(vec)
-
-        if (i + 1) % 32 == 0 or (i + 1) == total:
-            print(f"   embedded {i+1}/{total}")
-
-    return np.vstack(vectors)
 
 # ----------------------------------------------------------------------
-# CHANGED FUNCTION 2 (BATCH TAGGING)
+# Tag + Summary helpers
 # ----------------------------------------------------------------------
 
-def tags_for_chunk(texts):
+def tags_for_chunk(text: str):
 
-    numbered = "\n\n".join(
-        [f"{i+1}. {t[:1500]}" for i, t in enumerate(texts)]
+    prompt = (
+        "From the following text, extract 5–8 short meaningful tags "
+        "(topics, actions, entities). Comma-separated only:\n\n"
+        + text[:2000]
     )
-
-    prompt = f"""
-Extract 5 short semantic tags for EACH numbered paragraph.
-
-Return format strictly:
-
-1: tag1, tag2, tag3
-2: tag1, tag2, tag3
-
-Paragraphs:
-{numbered}
-"""
 
     raw = fire_fast_modal_request(prompt)
 
-    results = []
+    tags = [
+        t.strip().strip('"').strip("'").title()
+        for t in raw.split(",")
+        if len(t.strip()) > 1
+    ]
 
-    for line in raw.split("\n"):
+    return list(dict.fromkeys(tags))[:8]
 
-        if ":" not in line:
-            continue
-
-        parts = line.split(":", 1)[1]
-
-        tags = [
-            t.strip().strip('"').strip("'").title()
-            for t in parts.split(",")
-            if len(t.strip()) > 1
-        ]
-
-        results.append(tags[:6])
-
-    return results
-
-
-# ----------------------------------------------------------------------
-# Summary helper (unchanged)
-# ----------------------------------------------------------------------
 
 def summary_for_cluster(title, texts):
 
@@ -237,7 +142,6 @@ Sample content:
 """
 
     return fire_fast_modal_request(prompt)
-
 
 # ----------------------------------------------------------------------
 # Elasticsearch helpers
@@ -268,7 +172,6 @@ def es_update_or_create(index: str, doc_id: str, body: dict):
     except Exception as e:
 
         print(f"⚠️ ES update failed for {doc_id}: {e}")
-
 
 # ----------------------------------------------------------------------
 # Core refinement
@@ -369,21 +272,16 @@ def refine_clusters(refresh_summary=True, refresh_tags=True, cluster_count=None)
 
         chunk_actions = []
 
-        BATCH_SIZE = 10
+        for j, d in enumerate(docs, start=1 , ):
 
-        for i in range(0, len(docs), BATCH_SIZE):
+            if j % 25 == 0:
+                print(f"   processing chunk {j}/{len(docs)}")
 
-            batch_docs = docs[i:i+BATCH_SIZE]
+            if refresh_tags:
 
-            batch_texts = [d["_source"]["content"] for d in batch_docs]
+                chunk_tags = tags_for_chunk(d["_source"]["content"])
 
-            batch_tags = tags_for_chunk(batch_texts)
-
-            tag_strings = [" ".join(tags) for tags in batch_tags]
-
-            tag_vecs = embed_texts(tag_strings)
-
-            for d, chunk_tags, tag_vec in zip(batch_docs, batch_tags, tag_vecs):
+                tag_vec = embed_texts([" ".join(chunk_tags)])[0].tolist()
 
                 chunk_actions.append({
                     "_op_type": "update",
@@ -391,14 +289,12 @@ def refine_clusters(refresh_summary=True, refresh_tags=True, cluster_count=None)
                     "_id": d["_id"],
                     "doc": {
                         "chunk_metadata": {"tags": chunk_tags},
-                        "tag_vector": tag_vec.tolist()
+                        "tag_vector": tag_vec
                     },
                     "doc_as_upsert": True
                 })
 
                 all_tags.extend(chunk_tags)
-
-            print(f"   processed {min(i+BATCH_SIZE,len(docs))}/{len(docs)}")
 
         if chunk_actions:
 
@@ -443,7 +339,6 @@ def refine_clusters(refresh_summary=True, refresh_tags=True, cluster_count=None)
     print(f"\n🏁 Refinement finished in {total_dur/60:.2f} min")
 
     print(f"✅ Completed at {datetime.datetime.utcnow().isoformat()}")
-
 
 # ----------------------------------------------------------------------
 
