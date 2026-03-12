@@ -84,6 +84,14 @@ def build_all_clusters(es_writer: ESWriter):
     # Level-1: Agglomerative
     # -----------------------------------------------------
     logger.info("[BUILDER] Running Level-1 Agglomerative clustering...")
+
+    '''
+    # -----------------------------------------------------
+    # Level-1A: Agglomerative-Silhouette score for clustering
+    # -----------------------------------------------------
+    best_threshold = find_best_threshold(vectors)
+    logger.info(f"[BUILDER] Best threshold found: {best_threshold}")
+    '''
     root_clusters = run_agglomerative_clustering(vectors, chunk_ids)
     logger.info(f"[BUILDER] Created {len(root_clusters)} root clusters")
 
@@ -96,7 +104,7 @@ def build_all_clusters(es_writer: ESWriter):
         # vectors of members
         member_vecs = vectors[member_indices]
         member_ids = [chunk_ids[i] for i in member_indices]
-        print("Member IDs Generated:", len(member_ids))
+        logger.info(f"Member IDs Generated: {len(member_ids)}")
 
         centroid = np.mean(member_vecs, axis=0)
 

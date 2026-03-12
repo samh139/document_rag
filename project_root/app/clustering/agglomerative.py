@@ -47,19 +47,12 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
     # -----------------------------------------------------
     # Compute clustering labels
     # -----------------------------------------------------
-    #sample = vectors[np.random.choice(len(vectors), size=min(500, len(vectors)), replace=False)] ## use this for prod
-
-    dists = cosine_distances(vectors)
-
-    threshold = np.percentile(dists, 70)  # or 70
-    logger.info(f"Distance threshold set to {threshold:.4f} based on above percentiles")
-
 
     model = AgglomerativeClustering(
         n_clusters=None,
         metric="cosine",
         linkage="average",
-        distance_threshold=threshold,
+        distance_threshold=AGGLOMERATIVE_DISTANCE_THRESHOLD,
     )
 
     labels = model.fit_predict(vectors)
@@ -105,7 +98,7 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
 
     for _, tiny_idxs in small.items():
         large[largest_label].extend(tiny_idxs)
-    print(f"🔹 Merged {len(small)} small clusters into: {largest_label}")
+    logger.info(f"🔹 Merged {len(small)} small clusters into: {largest_label}")
 
     # -----------------------------------------------------
     # Return clean dict: { cluster_id: [member_indices] }
@@ -122,3 +115,46 @@ def run_agglomerative_clustering(vectors: np.ndarray, chunk_ids: List[str]) -> D
         logger.info(f"✅ Final Level-1 clusters: {len(result)}")
 
     return result
+
+ # -----------------------------------------------------
+    # Silhoutte Score Calculation 
+    # -----------------------------------------------------
+'''
+import numpy as np
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import silhouette_score
+
+def find_best_threshold(vectors):
+
+    thresholds = np.arange(0.40, 0.70, 0.05)
+
+    best_score = -1
+    best_threshold = None
+
+    for t in thresholds:
+
+        model = AgglomerativeClustering(
+            n_clusters=None,
+            metric="cosine",
+            linkage="average",
+            distance_threshold=t
+        )
+
+        labels = model.fit_predict(vectors)
+
+        if len(set(labels)) <= 1:
+            continue
+
+        score = silhouette_score(vectors, labels, metric="cosine")
+
+        print(f"threshold={t:.2f} clusters={len(set(labels))} silhouette={score:.4f}")
+
+        if score > best_score:
+            best_score = score
+            best_threshold = t
+
+    print("\nBEST THRESHOLD:", best_threshold)
+    print("BEST SCORE:", best_score)
+
+    return best_threshold
+'''

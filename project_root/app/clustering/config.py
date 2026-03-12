@@ -42,7 +42,7 @@ to prevent unrelated documents from collapsing into a giant cluster.
 """
 
 # Cosine distance threshold (lower = stricter separation)
-AGGLOMERATIVE_DISTANCE_THRESHOLD = 0.65
+AGGLOMERATIVE_DISTANCE_THRESHOLD = 0.60
 
 # Small clusters typically represent niche semantic concepts;
 # they should not be force-merged early.
@@ -59,11 +59,11 @@ should be subdivided and the range of K values for adaptive K-means.
 """
 
 # Minimum size for a Level-1 cluster to be subdivided
-SUBCLUSTER_MIN_SIZE = 50
+SUBCLUSTER_MIN_SIZE = 40
 
 # Clusters larger than this threshold must be subdivided.
 # This prevents runaway clusters (e.g., > 9000 chunks).
-SUBCLUSTER_MAX_SIZE = 800
+SUBCLUSTER_MAX_SIZE = 400
 
 # Range of K for adaptive subclustering
 SUBCLUSTER_MIN_K = 3
