@@ -42,7 +42,7 @@ to prevent unrelated documents from collapsing into a giant cluster.
 """
 
 # Cosine distance threshold (lower = stricter separation)
-AGGLOMERATIVE_DISTANCE_THRESHOLD = 0.60
+AGGLOMERATIVE_DISTANCE_THRESHOLD = 0.55
 
 # Small clusters typically represent niche semantic concepts;
 # they should not be force-merged early.
