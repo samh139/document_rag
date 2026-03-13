@@ -71,109 +71,44 @@ def fire_fast_modal_request(prompt: str):
 # ----------------------------------------------------------------------
 # CHANGED FUNCTION 1 (BATCHED EMBEDDINGS)
 # ----------------------------------------------------------------------
-'''
+
 def embed_texts(texts):
-
     vectors = []
-
-    total = len(texts)
+    # Nomic usually returns 768 dimensions. 
+    # Change this if you use a different model.
+    EMBED_DIM = 768 
 
     for i, text in enumerate(texts):
+        # Handle empty/none tags immediately without hitting the API
+        if not text or not str(text).strip():
+            vectors.append(np.zeros(EMBED_DIM))
+            continue
 
-        for attempt in range(MAX_RETRIES):
-
-            try:
-
-                r = requests.post(
-                    f"{OLLAMA_URL}/api/embeddings",
-                    json={
-                        "model": "nomic-embed-text",
-                        "prompt": text
-                    },
-                    timeout=120
-                )
-
-                r.raise_for_status()
-
-                vec = np.array(r.json()["embedding"])
-
+        try:
+            r = requests.post(
+                f"{OLLAMA_URL}/api/embeddings",
+                json={"model": "nomic-embed-text", "prompt": text},
+                timeout=60
+            )
+            r.raise_for_status()
+            
+            vec = r.json().get("embedding")
+            
+            # Check if we actually got a list back and it's the right size
+            if vec and len(vec) == EMBED_DIM:
+                vec = np.array(vec, dtype=np.float32)
                 norm = np.linalg.norm(vec)
+                vectors.append(vec / norm if norm > 0 else vec)
+            else:
+                # API returned something weird or empty
+                vectors.append(np.zeros(EMBED_DIM))
+                
+        except Exception as e:
+            print(f"⚠️ embedding failed for chunk {i}")
+            vectors.append(np.zeros(EMBED_DIM))
 
-                if norm > 0:
-                    vec = vec / norm
-
-                vectors.append(vec)
-
-                break
-
-            except Exception as e:
-
-                print(f"⚠️ Embedding retry {attempt+1}: {e}")
-
-                time.sleep(2)
-
-        if i % 32 == 0:
-            print(f"   embedded {i}/{total}")
-
+    # Now this will NEVER fail because every element is exactly (768,)
     return np.array(vectors)
-'''
-def embed_texts(texts):
-
-    vectors = []
-
-    total = len(texts)
-
-    for i, text in enumerate(texts):
-
-        vec = None
-
-        for attempt in range(MAX_RETRIES):
-
-            try:
-
-                r = requests.post(
-                    f"{OLLAMA_URL}/api/embeddings",
-                    json={
-                        "model": "nomic-embed-text",
-                        "prompt": text
-                    },
-                    timeout=120
-                )
-
-                r.raise_for_status()
-
-                data = r.json()
-
-                if "embedding" not in data:
-                    raise ValueError("Missing embedding field")
-
-                vec = np.array(data["embedding"], dtype=float)
-
-                norm = np.linalg.norm(vec)
-
-                if norm > 0:
-                    vec = vec / norm
-
-                break
-
-            except Exception as e:
-
-                print(f"⚠️ Embedding retry {attempt+1}: {e}")
-                time.sleep(2)
-
-        # If embedding failed after retries
-        if vec is None or vec.size == 0:
-
-            print("⚠️ Using zero vector fallback")
-
-            vec = np.zeros(768)  # nomic-embed-text dimension
-
-        vectors.append(vec)
-
-        if (i + 1) % 32 == 0 or (i + 1) == total:
-            print(f"   embedded {i+1}/{total}")
-
-    return np.vstack(vectors)
 
 # ----------------------------------------------------------------------
 # CHANGED FUNCTION 2 (BATCH TAGGING)
