@@ -8,3 +8,5 @@ redis
 elasticsearch
 ollama
 uvicorn[standard]
+numpy
+fastmcp

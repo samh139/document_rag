@@ -8,37 +8,7 @@ REDIS_URL = "redis://127.0.0.1:6379/0"
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 
-SLIDING_WINDOW_SIZE = 5
-
-
-def get_stm(session_id: str, user_id: str = "12345"):
-    key = f"stm:{user_id}:{session_id}"
-    data = redis_client.get(key)
-
-    if data:
-        stm = json.loads(data)
-    else:
-        stm = {
-            "turn_number": 0,
-            "topic": "",
-            "context_summary": "",
-            "entities": [],
-            "last_user_message": "",
-            "last_bot_message": ""
-        }
-
-    # 🔹 Ensure clarification block always exists
-    if "clarification" not in stm:
-        stm["clarification"] = {
-            "active": False,
-            "reason": "",
-            "candidate_clusters": [],
-            "created_at": None
-        }
-
-    return stm
-
-'''
+SLIDING_WINDOW_SIZE = 10
 def get_stm(session_id: str,user_id:str = "12345"):
     key = f"stm:{user_id}:{session_id}"
     data = redis_client.get(key)
@@ -52,7 +22,6 @@ def get_stm(session_id: str,user_id:str = "12345"):
         "last_user_message": "",
         "last_bot_message": ""
     }
-'''
 
 def save_stm(session_id: str, stm: dict,user_id:str = "12345"):
     key = f"stm:{user_id}:{session_id}"
@@ -117,54 +86,3 @@ def get_stm_summary(session_id: str, user_id: str= "12345"):
 
  
 
-def set_clarification_context(
-    session_id: str,
-    user_id: str,
-    reason: str,
-    candidate_clusters: list[dict]
-):
-    stm = get_stm(session_id, user_id)
-
-    stm["clarification"] = {
-        "active": True,
-        "reason": reason,
-        "candidate_clusters": candidate_clusters,
-        "created_at": datetime.utcnow().isoformat()
-    }
-
-    save_stm(session_id, stm, user_id)
-
-
-def clear_clarification_context(session_id: str, user_id: str):
-    stm = get_stm(session_id, user_id)
-
-    stm["clarification"] = {
-        "active": False,
-        "reason": "",
-        "candidate_clusters": [],
-        "created_at": None
-    }
-
-    save_stm(session_id, stm, user_id)
-
-
-CLARIFICATION_TTL_SECONDS = 120  # 2 minutes
-
-def get_clarification_context(session_id: str, user_id: str):
-    stm = get_stm(session_id, user_id)
-    clarification = stm.get("clarification", {})
-
-    if not clarification.get("active"):
-        return None
-
-    created_at = clarification.get("created_at")
-    if not created_at:
-        return None
-
-    created_time = datetime.fromisoformat(created_at)
-    if datetime.utcnow() - created_time > timedelta(seconds=CLARIFICATION_TTL_SECONDS):
-        # 🔥 Expired → auto clear
-        clear_clarification_context(session_id, user_id)
-        return None
-
-    return clarification
