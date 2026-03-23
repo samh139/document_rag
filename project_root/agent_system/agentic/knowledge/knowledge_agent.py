@@ -8,7 +8,6 @@ from agent_system.agentic.messages import (
     UserMessage,
     FinalAnswerMessage,
     RefinedQueryMessage,
-    ClarificationQuestionMessage
 )
 from agent_system.agentic.memory_team.stm.store import get_stm_summary
 from agent_system.agentic.knowledge_mcp_server.client import KnowledgeMCPClient
@@ -80,10 +79,12 @@ class KnowledgeAgent(RoutedAgent):
             )
 
             await self.publish_message(
-                ClarificationQuestionMessage(
+                FinalAnswerMessage(
                     session_id=session_id,
                     user_id=message.user_id,
-                    question=clarification_question,
+                    user_query=user_query,
+                    answer=clarification_question,
+                    citations=[],
                 ),
                 topic_id=session_id,
             )
@@ -122,10 +123,12 @@ class KnowledgeAgent(RoutedAgent):
             )
 
             await self.publish_message(
-                ClarificationQuestionMessage(
+                FinalAnswerMessage(
                     session_id=session_id,
                     user_id=message.user_id,
-                    question=clarification_question,
+                    user_query=user_query,
+                    answer=clarification_question,
+                    citations=[],
                 ),
                 topic_id=session_id,
             )

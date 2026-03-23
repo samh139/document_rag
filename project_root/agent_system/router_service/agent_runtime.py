@@ -1,7 +1,6 @@
 from autogen_core import SingleThreadedAgentRuntime
 
 from agent_system.agentic.classifier.classifier_agent import ClassifierAgent
-from agent_system.agentic.collectors.clarification_collector import ClarificationCollector
 from agent_system.agentic.collectors.final_answer_collector import FinalAnswerCollector
 from agent_system.agentic.knowledge.knowledge_agent import KnowledgeAgent
 from agent_system.agentic.query_refiner.query_refiner_agent import QueryRefinerAgent
@@ -14,12 +13,6 @@ async def initialize_runtime():
     await ClassifierAgent.register(runtime, "classification", ClassifierAgent)
     await QueryRefinerAgent.register(runtime, "query_refiner", QueryRefinerAgent)
     await KnowledgeAgent.register(runtime, "knowledge_agent", KnowledgeAgent)
-
-    await ClarificationCollector.register(
-        runtime,
-        "clarification_collector",
-        lambda: ClarificationCollector(pending_requests),
-    )
 
     await FinalAnswerCollector.register(
         runtime,

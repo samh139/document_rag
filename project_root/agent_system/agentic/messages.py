@@ -41,15 +41,4 @@ class RefinedQueryMessage(BaseModel):
     user_id: str
 
 
-class ClarificationQuestionMessage(BaseModel):
-    question: str
-    session_id: str
-    user_id: str
-
-
-class ClarificationReplyMessage(BaseModel):
-    content: str
-    session_id: str
-    user_id: str
-
 

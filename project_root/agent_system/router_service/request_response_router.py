@@ -5,8 +5,7 @@ import logging
 from confluent_kafka import Consumer, Producer
 from autogen_core import TopicId
 
-from agent_system.agentic.memory_team.stm.store import get_clarification_context
-from agent_system.agentic.messages import ClarificationReplyMessage, UserMessage
+from agent_system.agentic.messages import UserMessage
 from agent_system.agentic.topics import AgenticTopic
 from agent_system.router_service.agent_runtime import initialize_runtime, runtime
 from agent_system.router_service.state import pending_requests
@@ -34,21 +33,12 @@ async def process_message(data: dict):
     future = loop.create_future()
     pending_requests[session_id] = future
 
-    clarification = get_clarification_context(session_id=session_id, user_id=user_id)
-    if clarification:
-        outbound = ClarificationReplyMessage(
-            content=user_message,
-            session_id=session_id,
-            user_id=user_id,
-        )
-        topic = AgenticTopic.CLARIFICATION_REPLY.value
-    else:
-        outbound = UserMessage(
-            content=user_message,
-            session_id=session_id,
-            user_id=user_id,
-        )
-        topic = AgenticTopic.USER_INPUT.value
+    outbound = UserMessage(
+        content=user_message,
+        session_id=session_id,
+        user_id=user_id,
+    )
+    topic = AgenticTopic.USER_INPUT.value
 
     await runtime.publish_message(
         outbound,
@@ -59,25 +49,23 @@ async def process_message(data: dict):
         result = await asyncio.wait_for(future, timeout=180)
     except asyncio.TimeoutError:
         pending_requests.pop(session_id, None)
-        return {"session_id": session_id, "type": "error", "message": "Sorry, request timed out."}
+        return {
+            "session_id": session_id,
+            "type": "error",
+            "message": "Sorry, request timed out.",
+        }
 
     pending_requests.pop(session_id, None)
 
-    if hasattr(result, "question"):
-        return {
-            "session_id": session_id,
-            "type": "clarification",
-            "question": result.question,
-        }
-
-    citations = [
-        {
-            "chunk_id": citation.chunk_id,
-            "file_name": citation.file_name,
-            "chunk_content": citation.chunk_content[:160],
-        }
-        for citation in result.citations
-    ]
+    citations = []
+    for citation in getattr(result, "citations", []) or []:
+        citations.append(
+            {
+                "chunk_id": getattr(citation, "chunk_id", ""),
+                "file_name": getattr(citation, "file_name", ""),
+                "chunk_content": getattr(citation, "chunk_content", "")[:160],
+            }
+        )
 
     return {
         "session_id": session_id,
@@ -111,7 +99,7 @@ async def router_loop():
         except json.JSONDecodeError:
             print("[Router] Skipping empty Kafka message")
             continue
-        
+
         print("[Router] Received from Kafka:", data)
         response = await process_message(data)
         producer.produce(
