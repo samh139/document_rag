@@ -7,6 +7,7 @@ from agent_system.agentic.knowledge_mcp_server.prompts.prompt_registry import lo
 
 
 def _build_context(chunks: List[Dict]) -> str:
+    #print(f"CHhunks : {chunks}")
     context_parts = []
 
     for i, chunk in enumerate(chunks, start=1):
@@ -47,6 +48,7 @@ def synthesize_answer_impl(
         }
 
     context = _build_context(chunks)
+    #print(f"[synthesize_answer_impl] context = {context}")
 
     prompt_template = load_prompt("synthesis", "v1")
 
@@ -54,12 +56,15 @@ def synthesize_answer_impl(
         query=query,
         context=context,
     )
+    #rint(f"[synthesize_answer_impl] prompt = {prompt}")
 
     response = call_ollama(prompt)
+    #print(f"[synthesize_answer_impl] response = {response}")
 
     answer = response.strip()
 
     citations = _build_citations(chunks)
+    #print(f"[synthesize_answer_impl] citations = {citations}")
 
     return {
         "answer": answer,

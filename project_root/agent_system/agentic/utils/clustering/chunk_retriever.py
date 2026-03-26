@@ -157,10 +157,12 @@ class ChunkRetriever:
             chunk_metadata=item.get("chunk_metadata")
             file_metadata = item.get("file_metadata") or {}
             title = file_metadata.get("title", "")
+            content = item.get("content", "")
             #title=item.get("file_metadata",{}).get("title","")
             chunk_tags=[]
             if chunk_metadata:
                 chunk_tags=chunk_metadata.get("tags",[])
+            
             '''
             content = prepend_file_name_to_images(
                 item["content"],
@@ -173,6 +175,7 @@ class ChunkRetriever:
             results.append(ChunkData(
                 chunk_id=item["chunk_id"],
                 file=item.get("file_name") or "",
+                content=content,
                 file_title=title,
                 searched_for=query,
                 rrf=item.get("rrf", 0),

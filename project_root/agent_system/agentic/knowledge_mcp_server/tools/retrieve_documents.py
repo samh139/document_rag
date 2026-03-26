@@ -8,6 +8,7 @@ def _normalize_chunk(result) -> Dict[str, Any]:
     return {
         "chunk_id": result.chunk_id,
         "score": float(result.final_score),
+        "content": result.content or "",
         "file_name": result.file or "",
         "cluster_id": None,
         "metadata": {

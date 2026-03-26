@@ -111,6 +111,7 @@ class KnowledgeAgent(RoutedAgent):
             restrict_ids=restrict_ids,
             top_k=5,
         )
+        #print(f"[KnowledgeAgent] Retrieved chunks: {chunks}")
 
         # Optional fallback: no chunks found even though cluster was valid
         if not chunks:
@@ -150,6 +151,7 @@ class KnowledgeAgent(RoutedAgent):
             "answer",
         )
         citations = synthesis_result.get("citations", [])
+        print(f"[KnowledgeAgent] Synthesized answer: {answer} with citations: {citations}")
 
         await self.publish_message(
             FinalAnswerMessage(

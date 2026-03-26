@@ -7,6 +7,7 @@ class ChunkData(BaseModel):
     file: str
     file_title: Optional[str] = ""
     searched_for: Optional[str] = ""
+    content: str = ""
 
     # scoring
     relevant_score: Optional[float] = None
