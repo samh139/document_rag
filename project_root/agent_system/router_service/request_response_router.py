@@ -9,6 +9,7 @@ from agent_system.agentic.messages import UserMessage
 from agent_system.agentic.topics import AgenticTopic
 from agent_system.router_service.agent_runtime import initialize_runtime, runtime
 from agent_system.router_service.state import pending_requests
+from agent_system.agentic.memory_team.ltm.index_bootstrap import ensure_ltm_index
 
 logging.getLogger("autogen_core").setLevel(logging.WARNING)
 
@@ -113,6 +114,7 @@ async def router_loop():
 
 
 async def main():
+    ensure_ltm_index()
     await initialize_runtime()
     await router_loop()
 

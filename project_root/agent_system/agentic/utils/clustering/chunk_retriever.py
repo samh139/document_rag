@@ -7,24 +7,32 @@ from __future__ import annotations
 from typing import List, Dict, Optional
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from service.retrieval.text_bm25 import BM25Retriever
-from app_init.loaded_models import get_cross_encoder
-from app_configs.es_config import get_es_connection
-from app_configs.app_env import app_env
-from app_logger import get_app_logger
-from model_classes.chunk_data import ChunkData
+from agent_system.agentic.utils.retrieval.text_bm25 import BM25Retriever
+from agent_system.agentic.utils.es.es_utils import get_es_connection
+from agent_system.agentic.model_classes.chunk_data import ChunkData
 import re
 import os
 import math
+import logging
 
-logger = get_app_logger("chunk_retriever")
+from sentence_transformers import CrossEncoder
+import warnings
 
+from transformers import logging
+
+warnings.filterwarnings("ignore")
+logging.set_verbosity_error()
+
+ce_model_name="cross-encoder/ms-marco-MiniLM-L-6-v2"
+cross_encoder =  CrossEncoder(ce_model_name,device="mps")
+
+logger = logging.get_logger("ChunkRetriever")
 
 TAG_WEIGHT = 0.30
-RRF_K = 60
-CE_CANDIDATES_INPUT = 100
-BM_CANDIDATES=200
-KNN_CANDIDATES=200
+RRF_K = 30
+CE_CANDIDATES_INPUT = 50
+BM_CANDIDATES=100
+KNN_CANDIDATES=100
 
 # ---------------------------------------------------------
 def normalize(vals):
@@ -60,7 +68,7 @@ def rrf_merge(*lists):
 class ChunkRetriever:
     def __init__(self, top_k=20, bm25=None):
         self.top_k = top_k
-        self.index = app_env.get_es_chunks_index()
+        self.index = "dsprawl_documents"
 
         # Tests patch these
         self.es = get_es_connection()
@@ -68,6 +76,7 @@ class ChunkRetriever:
 
     # -----------------------------------------------------
     def _ann(self, field, qvec, restrict_ids=None):
+
         body = {
             "size": KNN_CANDIDATES,
             "query": {
@@ -84,11 +93,12 @@ class ChunkRetriever:
             body["query"] = {
                 "bool": {
                     "must": [{"knn": body["query"]["knn"]}],
-                    "filter": [{"terms": {"chunk_id": restrict_ids}}],
+                    "filter": [{"terms": {"chunk_id.keyword": restrict_ids}}],
                 }
             }
 
         try:
+            print(f"[ChunkRetriever._ann] field={field} restrict_ids count={len(restrict_ids) if restrict_ids else 0}")
             res = self.es.search(index=self.index, body=body)
         except Exception:
             return []
@@ -99,12 +109,8 @@ class ChunkRetriever:
             src = h.get("_source", {})
             results.append({
                 "chunk_id": src.get("chunk_id"),
-                "file_name": src.get("file_name"),
                 "content": src.get("content"),
-                "file_metadata": src.get("file_metadata"),
                 "chunk_metadata": src.get("chunk_metadata"),
-                "media_properties":src.get("media_properties"),
-                "parent_file":src.get("parent_file"),
                 "score": float(h.get("_score", 0)),
             })
         return results
@@ -134,7 +140,7 @@ class ChunkRetriever:
         fused = rrf_merge(ann_text, ann_tags, bm25_hits)
 
         # CE
-        ce = get_cross_encoder()
+        ce = cross_encoder
         candidates = fused[:CE_CANDIDATES_INPUT]
 
         pairs = [(query, c.get("content", "") or "") for c in candidates]
@@ -149,21 +155,24 @@ class ChunkRetriever:
         logger.debug(f"top k candidates count ={len(top_k_candidates)}")
         for rank, item in enumerate(top_k_candidates, 1):
             chunk_metadata=item.get("chunk_metadata")
-            title=item.get("file_metadata",{}).get("title","")
+            file_metadata = item.get("file_metadata") or {}
+            title = file_metadata.get("title", "")
+            #title=item.get("file_metadata",{}).get("title","")
             chunk_tags=[]
             if chunk_metadata:
                 chunk_tags=chunk_metadata.get("tags",[])
+            '''
             content = prepend_file_name_to_images(
                 item["content"],
                 item["file_name"]
             )
-        
+
             parent_file = item.get("parent_file", None)
-            ce_score=item["ce_score"]
+            '''
+            ce_score = item["ce_score"]
             results.append(ChunkData(
-                content=content,
                 chunk_id=item["chunk_id"],
-                file=item["file_name"],
+                file=item.get("file_name") or "",
                 file_title=title,
                 searched_for=query,
                 rrf=item.get("rrf", 0),
@@ -171,10 +180,8 @@ class ChunkRetriever:
                 relevant_score=ce_score,
                 final_score=ce_score,
                 final_rank=rank,
-                parent_file=parent_file,
                 chunk_tags=chunk_tags,
-                media_properties=item["media_properties"]
-            ))    
+            ))  
         return results
 
 

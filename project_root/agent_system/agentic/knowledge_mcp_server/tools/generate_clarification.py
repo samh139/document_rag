@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Dict
 
-from knowledge_mcp_server.tools.common import call_ollama
-from knowledge_mcp_server.prompts.prompt_registry import load_prompt
+from agent_system.agentic.knowledge_mcp_server.tools.common import call_ollama
+from agent_system.agentic.knowledge_mcp_server.prompts.prompt_registry import load_prompt
 
 
 def generate_clarification_impl(

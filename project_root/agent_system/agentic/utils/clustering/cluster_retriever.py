@@ -18,7 +18,7 @@ class ClusterRetriever:
 
     def __init__(self, top_k: int = 5):
         self.top_k = top_k
-        self.index = "dsprawl_documents"
+        self.index = "clusters_v2"
         self.es = get_es_connection()
         print(f"[ClusterRetriever] Initialised | top_k={self.top_k}")
 
@@ -59,8 +59,9 @@ class ClusterRetriever:
 
         return results
 
-    def retrieve(self, query_vec) -> List[Dict]:
+    def retrieve_clusters(self, query_vec) -> List[Dict]:
         clusters = self.search(query_vec)
+        print(f"[ClusterRetriever] Retrieved {len(clusters)} clusters")
         if not clusters:
             print("[ClusterRetriever] No clusters returned")
         return clusters

@@ -18,7 +18,7 @@ def retrieve_cluster_impl(
     top_k: int = 3,
 ) -> List[Dict[str, Any]]:
     retriever = ClusterRetriever(top_k=top_k)
-    results = retriever.retrieve(query_vec=query_embedding)
+    results = retriever.retrieve_clusters(query_vec=query_embedding)
     return [result for result in results] ## Add normalization later after testing 
 
 

@@ -4,19 +4,21 @@ from typing import Any, Dict, List, Optional
 
 from agent_system.agentic.utils.clustering.chunk_retriever import ChunkRetriever
 
-
-def _normalize_chunk(result: Dict[str, Any]) -> Dict[str, Any]:
-    metadata = result.get("metadata", {}) or {}
-
+def _normalize_chunk(result) -> Dict[str, Any]:
     return {
-        "chunk_id": result.get("chunk_id"),
-        "score": float(result.get("score")),
-        "content": result.get("content", ""),
-        "file_name": result.get("file_name", ""),
-        "cluster_id": result.get("cluster_id"),
-        "metadata": metadata,
+        "chunk_id": result.chunk_id,
+        "score": float(result.final_score),
+        "file_name": result.file or "",
+        "cluster_id": None,
+        "metadata": {
+            "file_title": result.file_title,
+            "chunk_tags": result.chunk_tags,
+            "rank": result.final_rank,
+            "bm_score": result.bm_score,
+            "rrf": result.rrf,
+            "relevant_score": result.relevant_score,
+        },
     }
-
 
 def retrieve_documents_impl(
     query: str,
@@ -25,6 +27,8 @@ def retrieve_documents_impl(
     top_k: int = 5,
 ) -> List[Dict[str, Any]]:
     retriever = ChunkRetriever(top_k=top_k)
+    print(f"[ChunkRetriever] restrict_ids count = {len(restrict_ids) if restrict_ids else 0}")
+    print(f"[ChunkRetriever] first 5 restrict_ids = {restrict_ids[:5] if restrict_ids else []}")
     results = retriever.retrieve(
         query=query,
         qvec=query_embedding,

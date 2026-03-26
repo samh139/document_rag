@@ -13,21 +13,27 @@ def detect_ambiguity_impl(
             "candidate_cluster_ids": [],
         }
 
-    top_cluster = cluster_results[0]
-    chunk_ids = top_cluster.get("chunk_ids", []) or []
-    cluster_id = top_cluster.get("cluster_id")
+    candidate_cluster_ids = [
+        cluster.get("cluster_id")
+        for cluster in cluster_results
+        if cluster.get("cluster_id")
+    ]
 
-    if not chunk_ids:
-        return {
-            "is_ambiguous": True,
-            "selected_cluster_id": None,
-            "candidate_cluster_ids": [cluster_id] if cluster_id else [],
-        }
+    for cluster in cluster_results:
+        chunk_ids = cluster.get("chunk_ids", []) or []
+        cluster_id = cluster.get("cluster_id")
+
+        if chunk_ids:
+            return {
+                "is_ambiguous": False,
+                "selected_cluster_id": cluster_id,
+                "candidate_cluster_ids": candidate_cluster_ids,
+            }
 
     return {
-        "is_ambiguous": False,
-        "selected_cluster_id": cluster_id,
-        "candidate_cluster_ids": [cluster_id] if cluster_id else [],
+        "is_ambiguous": True,
+        "selected_cluster_id": None,
+        "candidate_cluster_ids": candidate_cluster_ids,
     }
 
 

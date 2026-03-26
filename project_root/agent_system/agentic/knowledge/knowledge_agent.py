@@ -61,8 +61,12 @@ class KnowledgeAgent(RoutedAgent):
             cluster_results=cluster_results,
         )
 
-        is_ambiguous = ambiguity_result.get("is_ambiguous", True)
+        is_ambiguous = ambiguity_result.get("is_ambiguous")
         selected_cluster_id = ambiguity_result.get("selected_cluster_id")
+
+        #print(f"[KnowledgeAgent] cluster_results = {cluster_results}")
+        #print(f"[KnowledgeAgent] ambiguity_result = {ambiguity_result}")
+        print(f"[KnowledgeAgent] selected_cluster_id = {selected_cluster_id}")
 
         if is_ambiguous:
             stm_context = self._get_stm_context(session_id)
@@ -88,7 +92,8 @@ class KnowledgeAgent(RoutedAgent):
                 ),
                 topic_id=session_id,
             )
-            return f"Clarification question sent due to missing cluster: {clarification_question}"
+            print(f"[KnowledgeAgent] Clarification question sent due to missing cluster: {clarification_question}")
+            return 
 
         # Step 4: take selected cluster and its chunk_ids
         selected_cluster: Optional[Dict[str, Any]] = None
@@ -132,7 +137,8 @@ class KnowledgeAgent(RoutedAgent):
                 ),
                 topic_id=session_id,
             )
-            return f"Clarification question sent due to no chunks retrieved: {clarification_question}"
+            print(f"[KnowledgeAgent] Clarification question sent due to no chunks retrieved: {clarification_question}")
+            return
 
         # Step 6: synthesize final answer
         synthesis_result = self.mcp_client.synthesize_answer(
@@ -142,7 +148,6 @@ class KnowledgeAgent(RoutedAgent):
 
         answer = synthesis_result.get(
             "answer",
-            "I could not generate an answer from the retrieved documents.",
         )
         citations = synthesis_result.get("citations", [])
 

@@ -10,3 +10,5 @@ ollama
 uvicorn[standard]
 numpy
 fastmcp
+scikit-learn
+sentence-transformers
