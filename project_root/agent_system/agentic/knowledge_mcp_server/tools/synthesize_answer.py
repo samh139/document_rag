@@ -11,7 +11,6 @@ def _build_context(chunks: List[Dict]) -> str:
     context_parts = []
 
     for i, chunk in enumerate(chunks, start=1):
-        content = chunk.get("content", "")
         file_name = chunk.get("file_name", "")
         chunk_id = chunk.get("chunk_id", "")
         chunk_content = chunk.get("content", "")

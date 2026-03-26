@@ -14,6 +14,8 @@ from agent_system.agentic.knowledge_mcp_server.client import KnowledgeMCPClient
 from agent_system.agentic.utils.rag.embedding_client import embed_text
 from agent_system.agentic.memory_team.ltm.ltm_service import retrieve_ltm_context
 from agent_system.agentic.topics import AgenticTopic
+from autogen_core import TopicId
+
 
 @type_subscription(topic_type=AgenticTopic.REFINED_QUERY_TOPIC.value)
 class KnowledgeAgent(RoutedAgent):
@@ -83,15 +85,19 @@ class KnowledgeAgent(RoutedAgent):
             )
 
             await self.publish_message(
-                FinalAnswerMessage(
-                    session_id=session_id,
-                    user_id=message.user_id,
-                    user_query=user_query,
-                    answer=clarification_question,
-                    citations=[],
-                ),
-                topic_id=session_id,
-            )
+            FinalAnswerMessage(
+                session_id=session_id,
+                user_id=message.user_id,
+                user_query=user_query,
+                answer=clarification_question,
+                citations=[],
+            ),
+            topic_id=TopicId(
+                AgenticTopic.FINAL_RESPONSE.value,
+                source=self.id.key,
+            ),
+        )
+
             print(f"[KnowledgeAgent] Clarification question sent due to missing cluster: {clarification_question}")
             return 
 
@@ -129,15 +135,19 @@ class KnowledgeAgent(RoutedAgent):
             )
 
             await self.publish_message(
-                FinalAnswerMessage(
-                    session_id=session_id,
-                    user_id=message.user_id,
-                    user_query=user_query,
-                    answer=clarification_question,
-                    citations=[],
-                ),
-                topic_id=session_id,
-            )
+            FinalAnswerMessage(
+                session_id=session_id,
+                user_id=message.user_id,
+                user_query=user_query,
+                answer=clarification_question,
+                citations=[],
+            ),
+            topic_id=TopicId(
+                AgenticTopic.FINAL_RESPONSE.value,
+                source=self.id.key,
+            ),
+        )
+
             print(f"[KnowledgeAgent] Clarification question sent due to no chunks retrieved: {clarification_question}")
             return
 
@@ -154,12 +164,15 @@ class KnowledgeAgent(RoutedAgent):
         print(f"[KnowledgeAgent] Synthesized answer: {answer} with citations: {citations}")
 
         await self.publish_message(
-            FinalAnswerMessage(
+        FinalAnswerMessage(
             session_id=session_id,
             user_id=message.user_id,
             user_query=user_query,
             answer=answer,
             citations=citations,
         ),
-            topic_id=session_id,
-        )
+        topic_id=TopicId(
+            AgenticTopic.FINAL_RESPONSE.value,
+            source=self.id.key,
+        ),
+    )
