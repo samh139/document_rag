@@ -168,7 +168,7 @@ def rrf_fuse_ltm(bm25_list: list[dict], knn_list: list[dict], k: int = 60) -> li
     fused_candidates.sort(key=lambda x: x["rrf_score"], reverse=True)
     return fused_candidates
 
-def retrieve_ltm_context( query: str, user_id: str, session_id: str,
+def retrieve_ltm_context( query: str, session_id: str, user_id: str ="12345",
                         top_k_bm25: int = 10, top_k_knn: int = 10, top_n: int = 3) -> list[dict]:
     print("Retrieving LTM context...")
     """

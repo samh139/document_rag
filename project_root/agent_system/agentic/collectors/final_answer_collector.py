@@ -49,6 +49,8 @@ class FinalAnswerCollector(RoutedAgent):
         message: FinalAnswerMessage,
         ctx: MessageContext,
     ) -> None:
+        
+        print(f"FinalAnswerCollector received message for session {message.session_id}")
 
         # Remove request from pending map
         future = self.pending_requests.pop(message.session_id, None)
@@ -62,3 +64,4 @@ class FinalAnswerCollector(RoutedAgent):
             self._persist_memory(message),
             name=f"persist_memory:{message.session_id}"
         )
+        print(f"FinalAnswerCollector resolved pending request for session {message.session_id}")

@@ -15,10 +15,7 @@ from agent_system.agentic.messages import (
     UserMessage,
     ClassifierOutputMessage,
     FinalAnswerMessage,
-    ClarificationReplyMessage,   # ✅ NEW
 )
-
-from agent_system.agentic.memory_team.stm.store import get_clarification_context
 
 # ------------------------------------------------------------------
 # Logging
@@ -78,31 +75,6 @@ class ClassifierAgent(RoutedAgent):
 
         logger.info(f"[Classifier] User said: {message.content}")
 
-        # 🔥 STEP 1: Check clarification context FIRST
-        clarification = get_clarification_context(
-            session_id=message.session_id,
-            user_id=message.user_id,
-        )
-
-        if clarification and clarification.get("active", False):
-            logger.info("[Classifier] Clarification reply detected")
-
-            reply = ClarificationReplyMessage(
-                content=message.content,
-                session_id=message.session_id,
-                user_id=message.user_id,
-            )
-
-            await self.publish_message(
-                reply,
-                topic_id=TopicId(
-                    AgenticTopic.CLARIFICATION_REPLY.value,
-                    source=self.id.key,
-                ),
-            )
-            return
-
-        # 🔹 STEP 2: Normal classification
         intent = self._classify(message.content)
 
         if intent in {"GREETING", "OUT_OF_SCOPE"}:
@@ -127,7 +99,6 @@ class ClassifierAgent(RoutedAgent):
             )
             return
 
-        # 🔹 STEP 3: BANK_QUERY → QueryRefiner
         output = ClassifierOutputMessage(
             intent=intent,
             user_query=message.content,
