@@ -12,3 +12,4 @@ numpy
 fastmcp
 scikit-learn
 sentence-transformers
+deepeval
