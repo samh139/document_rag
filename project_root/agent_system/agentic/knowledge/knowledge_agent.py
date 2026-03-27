@@ -64,6 +64,7 @@ class KnowledgeAgent(RoutedAgent):
         )
 
         is_ambiguous = ambiguity_result.get("is_ambiguous")
+        print(f"[KnowledgeAgent] is_ambiguous = {is_ambiguous}")
         selected_cluster_id = ambiguity_result.get("selected_cluster_id")
 
         #print(f"[KnowledgeAgent] cluster_results = {cluster_results}")
@@ -109,6 +110,7 @@ class KnowledgeAgent(RoutedAgent):
                 break
 
         restrict_ids = selected_cluster.get("chunk_ids", []) or []
+        #print(f"[KnowledgeAgent] restrict_ids = {restrict_ids}")
 
         # Step 5: retrieve documents within cluster scope
         chunks = self.mcp_client.retrieve_documents(
@@ -118,9 +120,11 @@ class KnowledgeAgent(RoutedAgent):
             top_k=5,
         )
         #print(f"[KnowledgeAgent] Retrieved chunks: {chunks}")
+        print(f"[KnowledgeAgent] top_chunk_score = {chunks[0].get('score', 0.0)}")
 
-        # Optional fallback: no chunks found even though cluster was valid
-        if not chunks:
+        top_chunk_score = chunks[0].get("score", 0.0) if chunks else 0.0
+
+        if not chunks or top_chunk_score < 0.70:
             stm_context = self._get_stm_context(session_id)
             ltm_context = self._get_ltm_context(user_query, session_id)
 
@@ -161,7 +165,7 @@ class KnowledgeAgent(RoutedAgent):
             "answer",
         )
         citations = synthesis_result.get("citations", [])
-        print(f"[KnowledgeAgent] Synthesized answer: {answer} with citations: {citations}")
+        #print(f"[KnowledgeAgent] Synthesized answer: {answer} with citations: {citations}")
 
         await self.publish_message(
         FinalAnswerMessage(
