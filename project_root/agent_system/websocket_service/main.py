@@ -2,10 +2,12 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
 import asyncio
 
-from kafka_producer import send_message
-from kafka_consumer import consume_loop
+from agent_system.websocket_service.kafka_producer import send_message
+from agent_system.websocket_service.kafka_consumer import consume_loop
+from agent_system.metrics_evaluator.api import metrics_router
 
 app = FastAPI()
+app.include_router(metrics_router)
 
 
 # 🔹 Connection Manager

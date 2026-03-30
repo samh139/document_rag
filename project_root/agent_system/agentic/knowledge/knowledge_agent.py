@@ -89,6 +89,7 @@ class KnowledgeAgent(RoutedAgent):
             FinalAnswerMessage(
                 session_id=session_id,
                 user_id=message.user_id,
+                query_id=message.query_id,
                 user_query=user_query,
                 answer=clarification_question,
                 citations=[],
@@ -142,6 +143,7 @@ class KnowledgeAgent(RoutedAgent):
             FinalAnswerMessage(
                 session_id=session_id,
                 user_id=message.user_id,
+                query_id=message.query_id,
                 user_query=user_query,
                 answer=clarification_question,
                 citations=[],
@@ -171,6 +173,7 @@ class KnowledgeAgent(RoutedAgent):
         FinalAnswerMessage(
             session_id=session_id,
             user_id=message.user_id,
+            query_id=message.query_id,
             user_query=user_query,
             answer=answer,
             citations=citations,

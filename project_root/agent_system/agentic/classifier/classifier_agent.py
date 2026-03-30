@@ -87,6 +87,7 @@ class ClassifierAgent(RoutedAgent):
                 citations=[],
                 session_id=message.session_id,
                 user_id=message.user_id,
+                query_id=message.query_id,
                 user_query=message.content,
             )
 
@@ -105,6 +106,7 @@ class ClassifierAgent(RoutedAgent):
             response_text="Let me check that for you.",
             session_id=message.session_id,
             user_id=message.user_id,
+            query_id=message.query_id,
         )
 
         await self.publish_message(

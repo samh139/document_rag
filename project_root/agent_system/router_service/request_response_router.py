@@ -9,7 +9,8 @@ from agent_system.agentic.messages import UserMessage
 from agent_system.agentic.topics import AgenticTopic
 from agent_system.router_service.agent_runtime import initialize_runtime, runtime
 from agent_system.router_service.state import pending_requests
-from agent_system.agentic.memory_team.ltm.index_bootstrap import ensure_ltm_index
+from agent_system.agentic.utils.es.index_bootstrap import ensure_ltm_index ,ensure_agent_responses_index
+import uuid
 
 logging.getLogger("autogen_core").setLevel(logging.WARNING)
 
@@ -29,6 +30,7 @@ async def process_message(data: dict):
     session_id = data["session_id"]
     user_message = data["message"]
     user_id = data.get("user_id", "default_user")
+    query_id = str(uuid.uuid4())
 
     loop = asyncio.get_running_loop()
     future = loop.create_future()
@@ -38,6 +40,7 @@ async def process_message(data: dict):
         content=user_message,
         session_id=session_id,
         user_id=user_id,
+        query_id=query_id,
     )
     topic = AgenticTopic.USER_INPUT.value
 
@@ -52,6 +55,7 @@ async def process_message(data: dict):
         pending_requests.pop(session_id, None)
         return {
             "session_id": session_id,
+            "query_id": query_id,
             "type": "error",
             "message": "Sorry, request timed out.",
         }
@@ -70,6 +74,7 @@ async def process_message(data: dict):
 
     return {
         "session_id": session_id,
+        "query_id": query_id,
         "type": "answer",
         "answer": result.answer,
         "citations": citations,
@@ -115,6 +120,7 @@ async def router_loop():
 
 async def main():
     ensure_ltm_index()
+    ensure_agent_responses_index()
     await initialize_runtime()
     await router_loop()
 

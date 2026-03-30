@@ -139,6 +139,7 @@ Refined Retrieval Query:
             intent=message.intent,
             session_id=message.session_id,
             user_id=message.user_id,
+            query_id=message.query_id,
         )
 
         await self.publish_message(

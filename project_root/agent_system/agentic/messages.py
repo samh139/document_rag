@@ -10,6 +10,7 @@ class UserMessage:
     content: str
     session_id: str
     user_id: str
+    query_id: str
 
 
 class ClassifierOutputMessage(BaseModel):
@@ -18,6 +19,7 @@ class ClassifierOutputMessage(BaseModel):
     response_text: str
     session_id: str
     user_id: str
+    query_id: str
 
 
 class Citation(BaseModel):
@@ -31,6 +33,7 @@ class FinalAnswerMessage(BaseModel):
     session_id: str
     user_id: str
     user_query: str
+    query_id: str
 
 
 class RefinedQueryMessage(BaseModel):
@@ -39,6 +42,7 @@ class RefinedQueryMessage(BaseModel):
     refined_query: str
     session_id: str
     user_id: str
+    query_id: str
 
 
 

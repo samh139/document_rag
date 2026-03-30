@@ -2,7 +2,6 @@ from elasticsearch import Elasticsearch
 
 #using elastic search server 
 ES_HOST =  "http://localhost:9200"
-# ES_HOST =  "http://10.3.0.5:9200"
 
 
 def es_connect(es_host:str):
